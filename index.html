@@ -1,0 +1,1379 @@
+<!DOCTYPE html>
+<!-- saved from url=(0052)file:///Users/lico/Downloads/ai-game-dev-team_7.html -->
+<html lang="ko"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI 게임 개발팀 데이터 구조</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Share+Tech+Mono&display=swap');
+
+  :root {
+    --bg: #040812;
+    --panel: #080f1e;
+    --border: #0f2a4a;
+    --cyan: #00e5ff;
+    --magenta: #ff00aa;
+    --yellow: #ffe600;
+    --green: #00ff9f;
+    --text: #c8dff0;
+    --dim: #3a5570;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Share Tech Mono', monospace;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* Grid BG */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(0,229,255,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0,229,255,0.03) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .container {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 40px 20px;
+    position: relative;
+    z-index: 1;
+  }
+
+  header {
+    text-align: center;
+    margin-bottom: 50px;
+  }
+
+  header h1 {
+    font-family: 'Orbitron', sans-serif;
+    font-size: clamp(1.5rem, 4vw, 2.8rem);
+    font-weight: 900;
+    color: var(--cyan);
+    text-shadow: 0 0 30px rgba(0,229,255,0.5);
+    letter-spacing: 0.1em;
+    margin-bottom: 8px;
+  }
+
+  header p {
+    color: var(--dim);
+    font-size: 0.85rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+  }
+
+  /* TABS */
+  .tabs {
+    display: flex;
+    gap: 4px;
+    margin-bottom: 30px;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 0;
+    flex-wrap: wrap;
+  }
+
+  .tab-btn {
+    padding: 10px 20px;
+    background: none;
+    border: none;
+    border-bottom: 2px solid transparent;
+    color: var(--dim);
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.85rem;
+    cursor: pointer;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    transition: all 0.2s;
+    margin-bottom: -1px;
+  }
+
+  .tab-btn:hover { color: var(--cyan); }
+  .tab-btn.active {
+    color: var(--cyan);
+    border-bottom-color: var(--cyan);
+    text-shadow: 0 0 10px rgba(0,229,255,0.4);
+  }
+
+  .tab-panel { display: none; }
+  .tab-panel.active { display: block; animation: fadeIn 0.3s ease; }
+
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+
+  /* AGENT CARDS */
+  .agents-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 16px;
+    margin-bottom: 30px;
+  }
+
+  .agent-card {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 20px;
+    cursor: pointer;
+    transition: all 0.25s;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .agent-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    background: var(--accent, var(--cyan));
+    box-shadow: 0 0 12px var(--accent, var(--cyan));
+  }
+
+  .agent-card:hover {
+    border-color: var(--accent, var(--cyan));
+    transform: translateY(-3px);
+    box-shadow: 0 8px 30px rgba(0,0,0,0.4);
+  }
+
+  .agent-card.selected {
+    border-color: var(--accent, var(--cyan));
+    box-shadow: 0 0 20px rgba(0,229,255,0.15), inset 0 0 20px rgba(0,229,255,0.03);
+  }
+
+  .agent-icon { font-size: 2rem; margin-bottom: 12px; }
+
+  .agent-name {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: var(--accent, var(--cyan));
+    letter-spacing: 0.1em;
+    margin-bottom: 6px;
+  }
+
+  .agent-role {
+    font-size: 0.7rem;
+    color: var(--dim);
+    margin-bottom: 12px;
+    line-height: 1.5;
+  }
+
+  .agent-badge {
+    display: inline-block;
+    font-size: 0.6rem;
+    padding: 2px 8px;
+    border: 1px solid var(--accent, var(--cyan));
+    color: var(--accent, var(--cyan));
+    border-radius: 2px;
+    letter-spacing: 0.1em;
+  }
+
+  /* DETAIL PANEL */
+  .detail-panel {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 24px;
+    margin-top: 16px;
+    display: none;
+  }
+
+  .detail-panel.visible { display: block; animation: fadeIn 0.3s ease; }
+
+  .detail-panel h3 {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 0.9rem;
+    color: var(--cyan);
+    margin-bottom: 16px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .schema-block {
+    background: #020609;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 16px;
+    font-size: 0.75rem;
+    line-height: 1.8;
+    overflow-x: auto;
+  }
+
+  .schema-block .key { color: var(--cyan); }
+  .schema-block .type { color: var(--magenta); }
+  .schema-block .value { color: var(--green); }
+  .schema-block .comment { color: var(--dim); }
+  .schema-block .bracket { color: var(--yellow); }
+
+  /* FLOW */
+  .flow-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0;
+    flex-wrap: wrap;
+    margin: 30px 0;
+  }
+
+  .flow-node {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 16px 20px;
+    text-align: center;
+    min-width: 120px;
+    transition: all 0.2s;
+    cursor: default;
+  }
+
+  .flow-node:hover {
+    border-color: var(--cyan);
+    box-shadow: 0 0 15px rgba(0,229,255,0.15);
+  }
+
+  .flow-node .node-icon { font-size: 1.5rem; margin-bottom: 6px; }
+  .flow-node .node-label {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 0.6rem;
+    color: var(--cyan);
+    letter-spacing: 0.08em;
+  }
+
+  .flow-arrow {
+    color: var(--dim);
+    font-size: 1.2rem;
+    padding: 0 8px;
+    flex-shrink: 0;
+  }
+
+  /* SCHEMA TABLE */
+  .schema-section { margin-bottom: 30px; }
+
+  .schema-section h3 {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 0.8rem;
+    color: var(--yellow);
+    letter-spacing: 0.12em;
+    margin-bottom: 14px;
+    padding-left: 10px;
+    border-left: 3px solid var(--yellow);
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.72rem;
+  }
+
+  th {
+    background: #0a1624;
+    color: var(--dim);
+    text-align: left;
+    padding: 8px 12px;
+    letter-spacing: 0.1em;
+    font-size: 0.65rem;
+    border-bottom: 1px solid var(--border);
+  }
+
+  td {
+    padding: 8px 12px;
+    border-bottom: 1px solid rgba(15,42,74,0.5);
+    vertical-align: top;
+    line-height: 1.5;
+  }
+
+  td:first-child { color: var(--cyan); }
+  td:nth-child(2) { color: var(--magenta); }
+  td:nth-child(3) { color: var(--dim); }
+  td:nth-child(4) { color: var(--green); font-size: 0.65rem; }
+
+  tr:hover td { background: rgba(0,229,255,0.03); }
+
+  /* CHECKLIST */
+  .checklist { list-style: none; }
+
+  .checklist li {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 10px 0;
+    border-bottom: 1px solid rgba(15,42,74,0.5);
+    font-size: 0.78rem;
+    line-height: 1.5;
+  }
+
+  .check-box {
+    width: 18px;
+    height: 18px;
+    border: 1px solid var(--dim);
+    border-radius: 2px;
+    cursor: pointer;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+    margin-top: 1px;
+  }
+
+  .check-box.checked {
+    background: var(--green);
+    border-color: var(--green);
+    box-shadow: 0 0 8px rgba(0,255,159,0.4);
+  }
+
+  .check-box.checked::after { content: '✓'; font-size: 11px; color: #040812; }
+
+  .check-label { flex: 1; }
+  .check-label .check-title { color: var(--text); margin-bottom: 2px; }
+  .check-label .check-desc { color: var(--dim); font-size: 0.68rem; }
+
+  .progress-bar {
+    background: var(--border);
+    border-radius: 2px;
+    height: 4px;
+    margin-bottom: 20px;
+    overflow: hidden;
+  }
+
+  .progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--cyan), var(--green));
+    border-radius: 2px;
+    transition: width 0.4s ease;
+    box-shadow: 0 0 8px rgba(0,229,255,0.5);
+  }
+
+  .progress-label {
+    font-size: 0.7rem;
+    color: var(--dim);
+    text-align: right;
+    margin-bottom: 6px;
+  }
+
+  /* Glitch accent */
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.6; }
+  }
+
+  .live-dot {
+    display: inline-block;
+    width: 6px;
+    height: 6px;
+    background: var(--green);
+    border-radius: 50%;
+    margin-right: 6px;
+    animation: pulse 1.5s infinite;
+    box-shadow: 0 0 6px var(--green);
+  }
+
+  .tag {
+    display: inline-block;
+    padding: 2px 8px;
+    background: rgba(0,229,255,0.08);
+    border: 1px solid rgba(0,229,255,0.2);
+    border-radius: 2px;
+    font-size: 0.6rem;
+    color: var(--cyan);
+    margin: 2px;
+    letter-spacing: 0.05em;
+  }
+
+  .tag.pink { background: rgba(255,0,170,0.08); border-color: rgba(255,0,170,0.2); color: var(--magenta); }
+  .tag.green { background: rgba(0,255,159,0.08); border-color: rgba(0,255,159,0.2); color: var(--green); }
+  .tag.yellow { background: rgba(255,230,0,0.08); border-color: rgba(255,230,0,0.2); color: var(--yellow); }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <header>
+    <h1>AI GAME DEV TEAM</h1>
+    <p><span class="live-dot"></span>데이터 구조 · 시스템 아키텍처 · 설계 가이드</p>
+  </header>
+
+  <div class="tabs">
+    <button class="tab-btn active" onclick="showTab(&#39;agents&#39;)">🤖 에이전트 구조</button>
+    <button class="tab-btn" onclick="showTab(&#39;schema&#39;)">🗄️ 데이터 스키마</button>
+    <button class="tab-btn" onclick="showTab(&#39;flow&#39;)">⚡ 실행 흐름</button>
+    <button class="tab-btn" onclick="showTab(&#39;checklist&#39;)">✅ 구현 체크리스트</button>
+  </div>
+
+  <!-- TAB 1: AGENTS -->
+  <div id="tab-agents" class="tab-panel active">
+    <div class="agents-grid" id="agentsGrid"><div class="agent-card" style="--accent: #00e5ff;">
+    <div class="agent-icon">🧠</div>
+    <div class="agent-name">GeneralB</div>
+    <div class="agent-role">프로젝트 총괄 · 작업 분배 · 우선순위 결정</div>
+    <span class="agent-badge">총괄 조율</span>
+  </div><div style="grid-column: span 1; display: flex; flex-direction: column; gap: 0px;"><div class="agent-card" style="--accent: #ff00aa; border-bottom-left-radius: 0px; border-bottom-right-radius: 0px; border-bottom: none;">
+    <div class="agent-icon">📋</div>
+    <div class="agent-name">Steve Jobs (기획팀장)</div>
+    <div class="agent-role">게임 시스템 · 전투 · 보상 전반 기획 총괄</div>
+    <span class="agent-badge">기획 총괄</span>
+  </div><div style="border-width: 2px 1px 1px; border-style: dashed solid solid; border-color: rgba(255, 0, 170, 0.533) rgba(255, 0, 170, 0.4) rgba(255, 0, 170, 0.4); border-image: initial; border-radius: 0px 0px 4px 4px; padding: 10px 10px 10px 22px; background: rgba(0, 0, 0, 0.2); display: flex; flex-direction: column; gap: 8px; position: relative;"><div style="position: absolute; left: 10px; top: 12px; bottom: 12px; width: 2px; background: rgba(255, 0, 170, 0.333); border-radius: 2px;"></div><div class="agent-card" style="--accent: #ff00aa; font-size: 0.9em; position: relative;">
+    <div class="agent-icon">⚙️</div>
+    <div class="agent-name">시스템 기획자</div>
+    <div class="agent-role">게임 규칙 · 핵심 메카닉 · 경제 시스템 설계</div>
+    <span class="agent-badge">시스템 설계</span>
+  <div style="position: absolute; left: -12px; top: 50%; width: 10px; height: 2px; background: rgba(255, 0, 170, 0.333);"></div></div><div class="agent-card" style="--accent: #ff4466; font-size: 0.9em; position: relative;">
+    <div class="agent-icon">⚔️</div>
+    <div class="agent-name">전투 기획자</div>
+    <div class="agent-role">전투 시스템 · 스킬 · 밸런스 설계</div>
+    <span class="agent-badge">전투 설계</span>
+  <div style="position: absolute; left: -12px; top: 50%; width: 10px; height: 2px; background: rgba(255, 0, 170, 0.333);"></div></div><div class="agent-card" style="--accent: #ff8800; font-size: 0.9em; position: relative;">
+    <div class="agent-icon">🏆</div>
+    <div class="agent-name">보상 기획자</div>
+    <div class="agent-role">보상 구조 · 아이템 · 성장 시스템 설계</div>
+    <span class="agent-badge">보상 설계</span>
+  <div style="position: absolute; left: -12px; top: 50%; width: 10px; height: 2px; background: rgba(255, 0, 170, 0.333);"></div></div></div></div><div style="grid-column: span 1; display: flex; flex-direction: column; gap: 0px;"><div class="agent-card" style="--accent: #00ff9f; border-bottom-left-radius: 0px; border-bottom-right-radius: 0px; border-bottom: none;">
+    <div class="agent-icon">💻</div>
+    <div class="agent-name">Elon Musk (개발팀장)</div>
+    <div class="agent-role">개발 총괄 · 기술 방향 · 코드 리뷰</div>
+    <span class="agent-badge">개발 총괄</span>
+  </div><div style="border-width: 2px 1px 1px; border-style: dashed solid solid; border-color: rgba(0, 255, 159, 0.533) rgba(0, 255, 159, 0.4) rgba(0, 255, 159, 0.4); border-image: initial; border-radius: 0px 0px 4px 4px; padding: 10px 10px 10px 22px; background: rgba(0, 0, 0, 0.2); display: flex; flex-direction: column; gap: 8px; position: relative;"><div style="position: absolute; left: 10px; top: 12px; bottom: 12px; width: 2px; background: rgba(0, 255, 159, 0.333); border-radius: 2px;"></div><div class="agent-card" style="--accent: #00ff9f; font-size: 0.9em; position: relative;">
+    <div class="agent-icon">🕹️</div>
+    <div class="agent-name">Gameplay Programmer</div>
+    <div class="agent-role">횡스크롤 이동 · 충돌 · 전투 메카닉 구현</div>
+    <span class="agent-badge">게임플레이</span>
+  <div style="position: absolute; left: -12px; top: 50%; width: 10px; height: 2px; background: rgba(0, 255, 159, 0.333);"></div></div><div class="agent-card" style="--accent: #00ddaa; font-size: 0.9em; position: relative;">
+    <div class="agent-icon">🎲</div>
+    <div class="agent-name">Procedural Programmer</div>
+    <div class="agent-role">랜덤 맵 · 스테이지 · 아이템 생성 알고리즘</div>
+    <span class="agent-badge">프로시저럴</span>
+  <div style="position: absolute; left: -12px; top: 50%; width: 10px; height: 2px; background: rgba(0, 255, 159, 0.333);"></div></div><div class="agent-card" style="--accent: #00bbff; font-size: 0.9em; position: relative;">
+    <div class="agent-icon">🖥️</div>
+    <div class="agent-name">Server Programmer</div>
+    <div class="agent-role">멀티 세션 · 매치메이킹 · 게임 상태 동기화</div>
+    <span class="agent-badge">서버</span>
+  <div style="position: absolute; left: -12px; top: 50%; width: 10px; height: 2px; background: rgba(0, 255, 159, 0.333);"></div></div><div class="agent-card" style="--accent: #0099ff; font-size: 0.9em; position: relative;">
+    <div class="agent-icon">📡</div>
+    <div class="agent-name">Network Programmer</div>
+    <div class="agent-role">위치 동기화 · 지연 보정 · 패킷 설계</div>
+    <span class="agent-badge">네트워크</span>
+  <div style="position: absolute; left: -12px; top: 50%; width: 10px; height: 2px; background: rgba(0, 255, 159, 0.333);"></div></div></div></div><div style="grid-column: span 1; display: flex; flex-direction: column; gap: 0px;"><div class="agent-card" style="--accent: #ff9ecd; border-bottom-left-radius: 0px; border-bottom-right-radius: 0px; border-bottom: none;">
+    <div class="agent-icon">👑</div>
+    <div class="agent-name">유가은 (아트디렉터)</div>
+    <div class="agent-role">아트 총괄 · 비주얼 방향성 결정 · 팀 리드</div>
+    <span class="agent-badge">아트 총괄</span>
+  </div><div style="border-width: 2px 1px 1px; border-style: dashed solid solid; border-color: rgba(255, 158, 205, 0.533) rgba(255, 158, 205, 0.4) rgba(255, 158, 205, 0.4); border-image: initial; border-radius: 0px 0px 4px 4px; padding: 10px 10px 10px 22px; background: rgba(0, 0, 0, 0.2); display: flex; flex-direction: column; gap: 8px; position: relative;"><div style="position: absolute; left: 10px; top: 12px; bottom: 12px; width: 2px; background: rgba(255, 158, 205, 0.333); border-radius: 2px;"></div><div class="agent-card" style="--accent: #ff6b35; font-size: 0.9em; position: relative;">
+    <div class="agent-icon">🎨</div>
+    <div class="agent-name">아티스트</div>
+    <div class="agent-role">비주얼 컨셉 · 에셋 설명 · 스타일 가이드</div>
+    <span class="agent-badge">시각 디자인</span>
+  <div style="position: absolute; left: -12px; top: 50%; width: 10px; height: 2px; background: rgba(255, 158, 205, 0.333);"></div></div></div></div><div class="agent-card" style="--accent: #ffe600;">
+    <div class="agent-icon">🔍</div>
+    <div class="agent-name">W. Edwards Deming (품질 관리자)</div>
+    <div class="agent-role">테스트 · 버그 리포트 · 품질 검증</div>
+    <span class="agent-badge">품질 검증</span>
+  </div></div>
+    <div class="detail-panel" id="agentDetail">
+      <h3 id="detailTitle">에이전트 상세 스키마</h3>
+      <div class="schema-block" id="detailContent"></div>
+    </div>
+  </div>
+
+  <!-- TAB 2: SCHEMA -->
+  <div id="tab-schema" class="tab-panel">
+    <div class="schema-section">
+      <h3>AGENT 기본 오브젝트</h3>
+      <table>
+        <thead><tr><th>필드명</th><th>타입</th><th>설명</th><th>예시</th></tr></thead>
+        <tbody>
+          <tr><td>agent_id</td><td>string</td><td>고유 식별자 (UUID)</td><td>"planner-001"</td></tr>
+          <tr><td>role</td><td>enum</td><td>에이전트 역할</td><td>"PLANNER" | "DEV" | "ARTIST" | "QA" | "PM"</td></tr>
+          <tr><td>name</td><td>string</td><td>에이전트 표시명</td><td>"기획 에이전트 Alpha"</td></tr>
+          <tr><td>system_prompt</td><td>string</td><td>역할 정의 프롬프트</td><td>"당신은 게임 기획 전문가입니다..."</td></tr>
+          <tr><td>model</td><td>string</td><td>사용 AI 모델</td><td>"claude-sonnet-4-6" | "gpt-4o"</td></tr>
+          <tr><td>tools</td><td>string[]</td><td>사용 가능한 도구 목록</td><td>["file_write", "search"]</td></tr>
+          <tr><td>memory</td><td>Memory</td><td>에이전트 메모리 객체</td><td>{ short_term: [], long_term: {} }</td></tr>
+          <tr><td>status</td><td>enum</td><td>현재 상태</td><td>"IDLE" | "WORKING" | "WAITING" | "DONE"</td></tr>
+          <tr><td>created_at</td><td>timestamp</td><td>생성 시각</td><td>2025-01-01T00:00:00Z</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="schema-section">
+      <h3>TASK 오브젝트</h3>
+      <table>
+        <thead><tr><th>필드명</th><th>타입</th><th>설명</th><th>예시</th></tr></thead>
+        <tbody>
+          <tr><td>task_id</td><td>string</td><td>작업 고유 ID</td><td>"task-2025-001"</td></tr>
+          <tr><td>title</td><td>string</td><td>작업명</td><td>"레벨 디자인 문서 작성"</td></tr>
+          <tr><td>description</td><td>string</td><td>상세 설명</td><td>"스테이지 1~5 설계..."</td></tr>
+          <tr><td>assigned_to</td><td>string</td><td>담당 에이전트 ID</td><td>"planner-001"</td></tr>
+          <tr><td>depends_on</td><td>string[]</td><td>선행 작업 ID 목록</td><td>["task-2025-000"]</td></tr>
+          <tr><td>priority</td><td>enum</td><td>우선순위</td><td>"HIGH" | "MEDIUM" | "LOW"</td></tr>
+          <tr><td>status</td><td>enum</td><td>진행 상태</td><td>"TODO" | "IN_PROGRESS" | "REVIEW" | "DONE"</td></tr>
+          <tr><td>output</td><td>Artifact</td><td>산출물 객체</td><td>{ type: "document", content: "..." }</td></tr>
+          <tr><td>messages</td><td>Message[]</td><td>에이전트 대화 내역</td><td>[{ role: "assistant", content: "..." }]</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="schema-section">
+      <h3>PROJECT 오브젝트</h3>
+      <table>
+        <thead><tr><th>필드명</th><th>타입</th><th>설명</th><th>예시</th></tr></thead>
+        <tbody>
+          <tr><td>project_id</td><td>string</td><td>프로젝트 ID</td><td>"proj-rpg-001"</td></tr>
+          <tr><td>title</td><td>string</td><td>게임 제목</td><td>"던전 탐험 RPG"</td></tr>
+          <tr><td>genre</td><td>string</td><td>게임 장르</td><td>"RPG" | "FPS" | "퍼즐"</td></tr>
+          <tr><td>agents</td><td>Agent[]</td><td>참여 에이전트 목록</td><td>[planner, dev, artist, qa]</td></tr>
+          <tr><td>tasks</td><td>Task[]</td><td>전체 작업 목록</td><td>[...]</td></tr>
+          <tr><td>shared_memory</td><td>object</td><td>팀 공유 컨텍스트</td><td>{ game_design_doc: "..." }</td></tr>
+          <tr><td>phase</td><td>enum</td><td>개발 단계</td><td>"PLANNING" | "DEV" | "ART" | "QA" | "RELEASE"</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- TAB 3: FLOW -->
+  <div id="tab-flow" class="tab-panel">
+    <p style="color:var(--dim);font-size:0.75rem;margin-bottom:24px;">▶ 프로젝트 시작부터 완성까지의 에이전트 실행 흐름</p>
+
+    <div class="flow-container">
+      <div class="flow-node">
+        <div class="node-icon">👤</div>
+        <div class="node-label">USER INPUT</div>
+      </div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-node">
+        <div class="node-icon">🧠</div>
+        <div class="node-label">GeneralB</div>
+      </div>
+      <div class="flow-arrow">→</div>
+      <div style="display:flex;flex-direction:column;gap:6px;border:1px solid #ff00aa44;border-radius:4px;padding:8px;background:rgba(255,0,170,0.04);">
+        <div style="font-family:&#39;Orbitron&#39;,sans-serif;font-size:0.5rem;color:#ff00aa;letter-spacing:0.1em;text-align:center;margin-bottom:2px;">📋 기획팀</div>
+        <div class="flow-node" style="min-width:90px;padding:10px 12px;">
+          <div class="node-icon" style="font-size:1.1rem;margin-bottom:4px;">⚙️</div>
+          <div class="node-label" style="font-size:0.5rem;">시스템 기획자</div>
+        </div>
+        <div class="flow-node" style="min-width:90px;padding:10px 12px;">
+          <div class="node-icon" style="font-size:1.1rem;margin-bottom:4px;">⚔️</div>
+          <div class="node-label" style="font-size:0.5rem;">전투 기획자</div>
+        </div>
+        <div class="flow-node" style="min-width:90px;padding:10px 12px;">
+          <div class="node-icon" style="font-size:1.1rem;margin-bottom:4px;">🏆</div>
+          <div class="node-label" style="font-size:0.5rem;">보상 기획자</div>
+        </div>
+      </div>
+      <div class="flow-arrow">→</div>
+      <div style="display:flex;flex-direction:column;gap:6px;border:1px solid #00ff9f44;border-radius:4px;padding:8px;background:rgba(0,255,159,0.04);">
+        <div style="font-family:&#39;Orbitron&#39;,sans-serif;font-size:0.5rem;color:#00ff9f;letter-spacing:0.1em;text-align:center;margin-bottom:2px;">💻 개발팀</div>
+        <div class="flow-node" style="min-width:90px;padding:10px 12px;">
+          <div class="node-icon" style="font-size:1.1rem;margin-bottom:4px;">🕹️</div>
+          <div class="node-label" style="font-size:0.5rem;">Gameplay</div>
+        </div>
+        <div class="flow-node" style="min-width:90px;padding:10px 12px;">
+          <div class="node-icon" style="font-size:1.1rem;margin-bottom:4px;">🎲</div>
+          <div class="node-label" style="font-size:0.5rem;">Procedural</div>
+        </div>
+        <div class="flow-node" style="min-width:90px;padding:10px 12px;">
+          <div class="node-icon" style="font-size:1.1rem;margin-bottom:4px;">🖥️</div>
+          <div class="node-label" style="font-size:0.5rem;">Server</div>
+        </div>
+        <div class="flow-node" style="min-width:90px;padding:10px 12px;">
+          <div class="node-icon" style="font-size:1.1rem;margin-bottom:4px;">📡</div>
+          <div class="node-label" style="font-size:0.5rem;">Network</div>
+        </div>
+      </div>
+      <div class="flow-arrow">→</div>
+      <div style="display:flex;flex-direction:column;gap:6px;border:1px solid #ff9ecd44;border-radius:4px;padding:8px;background:rgba(255,158,205,0.04);">
+        <div style="font-family:&#39;Orbitron&#39;,sans-serif;font-size:0.5rem;color:#ff9ecd;letter-spacing:0.1em;text-align:center;margin-bottom:2px;">아트팀</div>
+        <div class="flow-node" style="min-width:90px;padding:10px 12px;">
+          <div class="node-icon" style="font-size:1.1rem;margin-bottom:4px;">👑</div>
+          <div class="node-label" style="font-size:0.5rem;">유가은 (AD)</div>
+        </div>
+        <div class="flow-node" style="min-width:90px;padding:10px 12px;">
+          <div class="node-icon" style="font-size:1.1rem;margin-bottom:4px;">🎨</div>
+          <div class="node-label" style="font-size:0.5rem;">아티스트</div>
+        </div>
+      </div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-node">
+        <div class="node-icon">🔍</div>
+        <div class="node-label">W.E. Deming</div>
+      </div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-node">
+        <div class="node-icon">🚀</div>
+        <div class="node-label">OUTPUT</div>
+      </div>
+    </div>
+
+    <div style="background:var(--panel);border:1px solid var(--border);border-radius:4px;padding:24px;margin-top:8px;">
+      <h3 style="font-family:&#39;Orbitron&#39;,sans-serif;font-size:0.75rem;color:var(--yellow);letter-spacing:0.1em;margin-bottom:16px;">각 에이전트의 INPUT → PROCESS → OUTPUT</h3>
+      <div id="flowDetails">
+    <div style="display:flex;gap:12px;align-items:flex-start;margin-bottom:16px;padding-bottom:16px;border-bottom:1px solid var(--border);">
+      <div style="width:3px;background:#00e5ff;border-radius:2px;align-self:stretch;flex-shrink:0;box-shadow:0 0 6px #00e5ff;"></div>
+      <div style="flex:1;">
+        <div style="font-family:&#39;Orbitron&#39;,sans-serif;font-size:0.7rem;color:#00e5ff;margin-bottom:6px;">🧠 GeneralB</div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;font-size:0.7rem;">
+          <span><span style="color:var(--dim);">IN ▸</span> 사용자 게임 요청</span>
+          <span style="color:var(--dim);">|</span>
+          <span><span style="color:var(--dim);">PROC ▸</span> 목표 분석 → 태스크 분해 → 에이전트 할당</span>
+          <span style="color:var(--dim);">|</span>
+          <span><span style="color:var(--dim);">OUT ▸</span> <span style="color:var(--green);">TaskList JSON</span></span>
+        </div>
+      </div>
+    </div>
+  
+    <div style="display:flex;gap:12px;align-items:flex-start;margin-bottom:16px;padding-bottom:16px;border-bottom:1px solid var(--border);">
+      <div style="width:3px;background:#ff00aa;border-radius:2px;align-self:stretch;flex-shrink:0;box-shadow:0 0 6px #ff00aa;"></div>
+      <div style="flex:1;">
+        <div style="font-family:&#39;Orbitron&#39;,sans-serif;font-size:0.7rem;color:#ff00aa;margin-bottom:6px;">⚙️ 시스템 기획자</div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;font-size:0.7rem;">
+          <span><span style="color:var(--dim);">IN ▸</span> TaskList + 게임 요청</span>
+          <span style="color:var(--dim);">|</span>
+          <span><span style="color:var(--dim);">PROC ▸</span> 메카닉 정의 → 경제 시스템 → GDD 작성</span>
+          <span style="color:var(--dim);">|</span>
+          <span><span style="color:var(--dim);">OUT ▸</span> <span style="color:var(--green);">system_design.md + game_rules.json</span></span>
+        </div>
+      </div>
+    </div>
+  
+    <div style="display:flex;gap:12px;align-items:flex-start;margin-bottom:16px;padding-bottom:16px;border-bottom:1px solid var(--border);">
+      <div style="width:3px;background:#ff4466;border-radius:2px;align-self:stretch;flex-shrink:0;box-shadow:0 0 6px #ff4466;"></div>
+      <div style="flex:1;">
+        <div style="font-family:&#39;Orbitron&#39;,sans-serif;font-size:0.7rem;color:#ff4466;margin-bottom:6px;">⚔️ 전투 기획자</div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;font-size:0.7rem;">
+          <span><span style="color:var(--dim);">IN ▸</span> GDD + 전투 요구사항</span>
+          <span style="color:var(--dim);">|</span>
+          <span><span style="color:var(--dim);">PROC ▸</span> 스킬 설계 → 스탯 밸런스 → 난이도 곡선</span>
+          <span style="color:var(--dim);">|</span>
+          <span><span style="color:var(--dim);">OUT ▸</span> <span style="color:var(--green);">combat_design.md + balance_sheet.json</span></span>
+        </div>
+      </div>
+    </div>
+  
+    <div style="display:flex;gap:12px;align-items:flex-start;margin-bottom:16px;padding-bottom:16px;border-bottom:1px solid var(--border);">
+      <div style="width:3px;background:#ff8800;border-radius:2px;align-self:stretch;flex-shrink:0;box-shadow:0 0 6px #ff8800;"></div>
+      <div style="flex:1;">
+        <div style="font-family:&#39;Orbitron&#39;,sans-serif;font-size:0.7rem;color:#ff8800;margin-bottom:6px;">🏆 보상 기획자</div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;font-size:0.7rem;">
+          <span><span style="color:var(--dim);">IN ▸</span> GDD + 성장 요구사항</span>
+          <span style="color:var(--dim);">|</span>
+          <span><span style="color:var(--dim);">PROC ▸</span> 보상 루프 → 아이템 등급 → 성장 커브</span>
+          <span style="color:var(--dim);">|</span>
+          <span><span style="color:var(--dim);">OUT ▸</span> <span style="color:var(--green);">reward_system.md + item_table.json</span></span>
+        </div>
+      </div>
+    </div>
+  
+    <div style="display:flex;gap:12px;align-items:flex-start;margin-bottom:16px;padding-bottom:16px;border-bottom:1px solid var(--border);">
+      <div style="width:3px;background:#00ff9f;border-radius:2px;align-self:stretch;flex-shrink:0;box-shadow:0 0 6px #00ff9f;"></div>
+      <div style="flex:1;">
+        <div style="font-family:&#39;Orbitron&#39;,sans-serif;font-size:0.7rem;color:#00ff9f;margin-bottom:6px;">🕹️ Gameplay Programmer</div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;font-size:0.7rem;">
+          <span><span style="color:var(--dim);">IN ▸</span> GDD.md + 전투 기획서</span>
+          <span style="color:var(--dim);">|</span>
+          <span><span style="color:var(--dim);">PROC ▸</span> 이동·충돌·전투 로직 구현</span>
+          <span style="color:var(--dim);">|</span>
+          <span><span style="color:var(--dim);">OUT ▸</span> <span style="color:var(--green);">player_controller.js + combat_system.js</span></span>
+        </div>
+      </div>
+    </div>
+  
+    <div style="display:flex;gap:12px;align-items:flex-start;margin-bottom:16px;padding-bottom:16px;border-bottom:1px solid var(--border);">
+      <div style="width:3px;background:#00ddaa;border-radius:2px;align-self:stretch;flex-shrink:0;box-shadow:0 0 6px #00ddaa;"></div>
+      <div style="flex:1;">
+        <div style="font-family:&#39;Orbitron&#39;,sans-serif;font-size:0.7rem;color:#00ddaa;margin-bottom:6px;">🎲 Procedural Programmer</div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;font-size:0.7rem;">
+          <span><span style="color:var(--dim);">IN ▸</span> GDD.md + 랜덤 설계서</span>
+          <span style="color:var(--dim);">|</span>
+          <span><span style="color:var(--dim);">PROC ▸</span> 시드 기반 맵·아이템 생성 알고리즘</span>
+          <span style="color:var(--dim);">|</span>
+          <span><span style="color:var(--dim);">OUT ▸</span> <span style="color:var(--green);">map_generator.js + seed_manager.js</span></span>
+        </div>
+      </div>
+    </div>
+  
+    <div style="display:flex;gap:12px;align-items:flex-start;margin-bottom:16px;padding-bottom:16px;border-bottom:1px solid var(--border);">
+      <div style="width:3px;background:#00bbff;border-radius:2px;align-self:stretch;flex-shrink:0;box-shadow:0 0 6px #00bbff;"></div>
+      <div style="flex:1;">
+        <div style="font-family:&#39;Orbitron&#39;,sans-serif;font-size:0.7rem;color:#00bbff;margin-bottom:6px;">🖥️ Server Programmer</div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;font-size:0.7rem;">
+          <span><span style="color:var(--dim);">IN ▸</span> 멀티플레이 요구사항</span>
+          <span style="color:var(--dim);">|</span>
+          <span><span style="color:var(--dim);">PROC ▸</span> 세션 관리 → 매치메이킹 → 상태 동기화</span>
+          <span style="color:var(--dim);">|</span>
+          <span><span style="color:var(--dim);">OUT ▸</span> <span style="color:var(--green);">game_server.js + matchmaking.js</span></span>
+        </div>
+      </div>
+    </div>
+  
+    <div style="display:flex;gap:12px;align-items:flex-start;margin-bottom:16px;padding-bottom:16px;border-bottom:1px solid var(--border);">
+      <div style="width:3px;background:#0099ff;border-radius:2px;align-self:stretch;flex-shrink:0;box-shadow:0 0 6px #0099ff;"></div>
+      <div style="flex:1;">
+        <div style="font-family:&#39;Orbitron&#39;,sans-serif;font-size:0.7rem;color:#0099ff;margin-bottom:6px;">📡 Network Programmer</div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;font-size:0.7rem;">
+          <span><span style="color:var(--dim);">IN ▸</span> 서버 구조 + 지연 요구사항</span>
+          <span style="color:var(--dim);">|</span>
+          <span><span style="color:var(--dim);">PROC ▸</span> 위치 동기화 → 지연 보정 → 패킷 최적화</span>
+          <span style="color:var(--dim);">|</span>
+          <span><span style="color:var(--dim);">OUT ▸</span> <span style="color:var(--green);">network_manager.js + packet_schema.json</span></span>
+        </div>
+      </div>
+    </div>
+  
+    <div style="display:flex;gap:12px;align-items:flex-start;margin-bottom:16px;padding-bottom:16px;border-bottom:1px solid var(--border);">
+      <div style="width:3px;background:#ff9ecd;border-radius:2px;align-self:stretch;flex-shrink:0;box-shadow:0 0 6px #ff9ecd;"></div>
+      <div style="flex:1;">
+        <div style="font-family:&#39;Orbitron&#39;,sans-serif;font-size:0.7rem;color:#ff9ecd;margin-bottom:6px;">👑 유가은 (아트디렉터)</div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;font-size:0.7rem;">
+          <span><span style="color:var(--dim);">IN ▸</span> GDD + 세계관 자료</span>
+          <span style="color:var(--dim);">|</span>
+          <span><span style="color:var(--dim);">PROC ▸</span> 아트 방향성 수립 → 스타일 가이드 정의 → 아티스트 리드</span>
+          <span style="color:var(--dim);">|</span>
+          <span><span style="color:var(--dim);">OUT ▸</span> <span style="color:var(--green);">art_direction.md + visual_bible.pdf</span></span>
+        </div>
+      </div>
+    </div>
+  
+    <div style="display:flex;gap:12px;align-items:flex-start;margin-bottom:16px;padding-bottom:16px;border-bottom:1px solid var(--border);">
+      <div style="width:3px;background:#ff6b35;border-radius:2px;align-self:stretch;flex-shrink:0;box-shadow:0 0 6px #ff6b35;"></div>
+      <div style="flex:1;">
+        <div style="font-family:&#39;Orbitron&#39;,sans-serif;font-size:0.7rem;color:#ff6b35;margin-bottom:6px;">🎨 아티스트</div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;font-size:0.7rem;">
+          <span><span style="color:var(--dim);">IN ▸</span> art_direction.md + 스타일 요구사항</span>
+          <span style="color:var(--dim);">|</span>
+          <span><span style="color:var(--dim);">PROC ▸</span> 스타일 가이드 → 에셋 프롬프트 생성</span>
+          <span style="color:var(--dim);">|</span>
+          <span><span style="color:var(--dim);">OUT ▸</span> <span style="color:var(--green);">style_guide.md + image prompts</span></span>
+        </div>
+      </div>
+    </div>
+  
+    <div style="display:flex;gap:12px;align-items:flex-start;margin-bottom:16px;padding-bottom:16px;border-bottom:1px solid var(--border);">
+      <div style="width:3px;background:#ffe600;border-radius:2px;align-self:stretch;flex-shrink:0;box-shadow:0 0 6px #ffe600;"></div>
+      <div style="flex:1;">
+        <div style="font-family:&#39;Orbitron&#39;,sans-serif;font-size:0.7rem;color:#ffe600;margin-bottom:6px;">🔍 W. Edwards Deming (품질 관리자)</div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;font-size:0.7rem;">
+          <span><span style="color:var(--dim);">IN ▸</span> 모든 산출물</span>
+          <span style="color:var(--dim);">|</span>
+          <span><span style="color:var(--dim);">PROC ▸</span> GDD 대조 → 코드 검증 → 버그 발견</span>
+          <span style="color:var(--dim);">|</span>
+          <span><span style="color:var(--dim);">OUT ▸</span> <span style="color:var(--green);">bug_report.json → 피드백 루프</span></span>
+        </div>
+      </div>
+    </div>
+  </div>
+    </div>
+
+    <div style="background:var(--panel);border:1px solid var(--border);border-radius:4px;padding:24px;margin-top:16px;">
+      <h3 style="font-family:&#39;Orbitron&#39;,sans-serif;font-size:0.75rem;color:var(--magenta);letter-spacing:0.1em;margin-bottom:12px;">메시지 구조 (에이전트 간 통신)</h3>
+      <div class="schema-block">
+<span class="bracket">{</span>
+  <span class="key">"message_id"</span>: <span class="type">string</span>,         <span class="comment">// 고유 메시지 ID</span>
+  <span class="key">"from_agent"</span>: <span class="type">string</span>,         <span class="comment">// 발신 에이전트 ID</span>
+  <span class="key">"to_agent"</span>: <span class="type">string</span>,           <span class="comment">// 수신 에이전트 ID (또는 "broadcast")</span>
+  <span class="key">"type"</span>: <span class="value">"TASK_ASSIGN" | "RESULT" | "FEEDBACK" | "QUERY"</span>,
+  <span class="key">"payload"</span>: <span class="bracket">{</span>
+    <span class="key">"task_id"</span>: <span class="type">string</span>,
+    <span class="key">"content"</span>: <span class="type">string</span>,          <span class="comment">// 실제 메시지 내용</span>
+    <span class="key">"artifacts"</span>: <span class="type">Artifact[]</span>   <span class="comment">// 첨부 산출물</span>
+  <span class="bracket">}</span>,
+  <span class="key">"timestamp"</span>: <span class="type">timestamp</span>,
+  <span class="key">"thread_id"</span>: <span class="type">string</span>          <span class="comment">// 대화 스레드 묶음</span>
+<span class="bracket">}</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB 4: CHECKLIST -->
+  <div id="tab-checklist" class="tab-panel">
+    <p style="color:var(--dim);font-size:0.75rem;margin-bottom:8px;">구현 진행 상황을 체크하세요</p>
+    <div class="progress-label" id="progressLabel">0 / 15 완료</div>
+    <div class="progress-bar"><div class="progress-fill" id="progressFill" style="width:0%"></div></div>
+    <ul class="checklist" id="checklistItems"><li>
+    <div class="check-box" id="cb-0" onclick="toggleCheck(0)"></div>
+    <div class="check-label">
+      <div class="check-title">Agent 기본 클래스 설계 <span class="tag">기반 구조</span></div>
+      <div class="check-desc">agent_id, role, system_prompt, model, status 필드 포함</div>
+    </div>
+  </li><li>
+    <div class="check-box" id="cb-1" onclick="toggleCheck(1)"></div>
+    <div class="check-label">
+      <div class="check-title">Task 오브젝트 구현 <span class="tag">기반 구조</span></div>
+      <div class="check-desc">task_id, assigned_to, depends_on, status, output 필드</div>
+    </div>
+  </li><li>
+    <div class="check-box" id="cb-2" onclick="toggleCheck(2)"></div>
+    <div class="check-label">
+      <div class="check-title">Project 오브젝트 구현 <span class="tag">기반 구조</span></div>
+      <div class="check-desc">agents[], tasks[], shared_memory, phase 필드</div>
+    </div>
+  </li><li>
+    <div class="check-box" id="cb-3" onclick="toggleCheck(3)"></div>
+    <div class="check-label">
+      <div class="check-title">PM Agent 프롬프트 작성 <span class="tag">PM</span></div>
+      <div class="check-desc">태스크 분해 및 에이전트 할당 로직 포함</div>
+    </div>
+  </li><li>
+    <div class="check-box" id="cb-4" onclick="toggleCheck(4)"></div>
+    <div class="check-label">
+      <div class="check-title">Planner Agent 프롬프트 작성 <span class="tag">PLANNER</span></div>
+      <div class="check-desc">GDD 출력 포맷(JSON/Markdown) 명확히 정의</div>
+    </div>
+  </li><li>
+    <div class="check-box" id="cb-5" onclick="toggleCheck(5)"></div>
+    <div class="check-label">
+      <div class="check-title">Developer Agent 프롬프트 작성 <span class="tag">DEV</span></div>
+      <div class="check-desc">코드 생성 + QA 피드백 반영 루프 설계</div>
+    </div>
+  </li><li>
+    <div class="check-box" id="cb-6" onclick="toggleCheck(6)"></div>
+    <div class="check-label">
+      <div class="check-title">Artist Agent 프롬프트 작성 <span class="tag">ARTIST</span></div>
+      <div class="check-desc">이미지 생성 API 연동 또는 프롬프트 출력 방식 결정</div>
+    </div>
+  </li><li>
+    <div class="check-box" id="cb-7" onclick="toggleCheck(7)"></div>
+    <div class="check-label">
+      <div class="check-title">QA Agent 프롬프트 작성 <span class="tag">QA</span></div>
+      <div class="check-desc">검증 체크리스트 및 버그 리포트 JSON 스키마 정의</div>
+    </div>
+  </li><li>
+    <div class="check-box" id="cb-8" onclick="toggleCheck(8)"></div>
+    <div class="check-label">
+      <div class="check-title">Agent 간 메시지 스키마 구현 <span class="tag">통신</span></div>
+      <div class="check-desc">from/to/type/payload/thread_id 구조</div>
+    </div>
+  </li><li>
+    <div class="check-box" id="cb-9" onclick="toggleCheck(9)"></div>
+    <div class="check-label">
+      <div class="check-title">공유 메모리(SharedMemory) 설계 <span class="tag">통신</span></div>
+      <div class="check-desc">팀 전체가 참조할 GDD, 에셋 목록 저장 구조</div>
+    </div>
+  </li><li>
+    <div class="check-box" id="cb-10" onclick="toggleCheck(10)"></div>
+    <div class="check-label">
+      <div class="check-title">AI API 연동 (OpenAI / Claude) <span class="tag">API</span></div>
+      <div class="check-desc">API 키 관리, 모델 선택, 토큰 제한 처리</div>
+    </div>
+  </li><li>
+    <div class="check-box" id="cb-11" onclick="toggleCheck(11)"></div>
+    <div class="check-label">
+      <div class="check-title">에러 핸들링 &amp; 재시도 로직 <span class="tag">API</span></div>
+      <div class="check-desc">API 실패, 에이전트 응답 오류 시 복구 처리</div>
+    </div>
+  </li><li>
+    <div class="check-box" id="cb-12" onclick="toggleCheck(12)"></div>
+    <div class="check-label">
+      <div class="check-title">산출물(Artifact) 저장 구조 <span class="tag">산출물</span></div>
+      <div class="check-desc">파일 시스템 또는 DB에 버전별 저장 방식</div>
+    </div>
+  </li><li>
+    <div class="check-box" id="cb-13" onclick="toggleCheck(13)"></div>
+    <div class="check-label">
+      <div class="check-title">피드백 루프 구현 (QA → DEV) <span class="tag">루프</span></div>
+      <div class="check-desc">QA 버그 리포트 → DEV 재작업 → QA 재검증 사이클</div>
+    </div>
+  </li><li>
+    <div class="check-box" id="cb-14" onclick="toggleCheck(14)"></div>
+    <div class="check-label">
+      <div class="check-title">전체 파이프라인 테스트 <span class="tag">테스트</span></div>
+      <div class="check-desc">간단한 게임 하나를 처음부터 끝까지 생성해보기</div>
+    </div>
+  </li></ul>
+  </div>
+
+</div>
+
+<script>
+const agents = [
+  {
+    id: 'pm',
+    icon: '🧠',
+    name: 'GeneralB',
+    role: '프로젝트 총괄 · 작업 분배 · 우선순위 결정',
+    badge: '총괄 조율',
+    accent: '#00e5ff',
+    schema: `<span class="bracket">{</span>
+  <span class="key">"role"</span>: <span class="value">"PM"</span>,
+  <span class="key">"responsibilities"</span>: <span class="bracket">[</span>
+    <span class="value">"프로젝트 목표 분석"</span>,
+    <span class="value">"작업 분해 (Task Breakdown)"</span>,
+    <span class="value">"에이전트 할당 결정"</span>,
+    <span class="value">"진행 상태 모니터링"</span>
+  <span class="bracket">]</span>,
+  <span class="key">"system_prompt_hint"</span>: <span class="value">"당신은 게임 개발 PM입니다. 사용자 요청을 분석하여 각 전문 에이전트에게 명확한 태스크를 배분합니다."</span>,
+  <span class="key">"output_format"</span>: <span class="value">"TaskList JSON"</span>
+<span class="bracket">}</span>`
+  },
+  {
+    id: 'planner-group',
+    icon: '📋',
+    name: 'Steve Jobs (기획팀장)',
+    role: '게임 시스템 · 전투 · 보상 전반 기획 총괄',
+    badge: '기획 총괄',
+    accent: '#ff00aa',
+    parent: null,
+    schema: `<span class="bracket">{</span>
+  <span class="key">"role"</span>: <span class="value">"PLANNER_GROUP"</span>,
+  <span class="key">"description"</span>: <span class="value">"시스템 · 전투 · 보상 기획자로 구성된 기획팀"</span>,
+  <span class="key">"members"</span>: <span class="bracket">[</span>
+    <span class="value">"시스템 기획자"</span>, <span class="value">"전투 기획자"</span>, <span class="value">"보상 기획자"</span>
+  <span class="bracket">]</span>,
+  <span class="key">"shared_output"</span>: <span class="value">"GDD.md (통합 기획 문서)"</span>
+<span class="bracket">}</span>`
+  },
+  {
+    id: 'planner-system',
+    icon: '⚙️',
+    name: '시스템 기획자',
+    role: '게임 규칙 · 핵심 메카닉 · 경제 시스템 설계',
+    badge: '시스템 설계',
+    accent: '#ff00aa',
+    parent: 'planner-group',
+    schema: `<span class="bracket">{</span>
+  <span class="key">"role"</span>: <span class="value">"PLANNER_SYSTEM"</span>,
+  <span class="key">"responsibilities"</span>: <span class="bracket">[</span>
+    <span class="value">"핵심 게임 메카닉 정의"</span>,
+    <span class="value">"게임 경제 시스템 설계"</span>,
+    <span class="value">"레벨 진행 구조 설계"</span>,
+    <span class="value">"GDD 총괄 문서 작성"</span>
+  <span class="bracket">]</span>,
+  <span class="key">"output_artifacts"</span>: <span class="bracket">[</span>
+    <span class="value">"system_design.md"</span>, <span class="value">"game_rules.json"</span>, <span class="value">"economy_model.json"</span>
+  <span class="bracket">]</span>,
+  <span class="key">"tools"</span>: <span class="bracket">[</span><span class="value">"file_write"</span>, <span class="value">"template_fill"</span><span class="bracket">]</span>
+<span class="bracket">}</span>`
+  },
+  {
+    id: 'planner-combat',
+    icon: '⚔️',
+    name: '전투 기획자',
+    role: '전투 시스템 · 스킬 · 밸런스 설계',
+    badge: '전투 설계',
+    accent: '#ff4466',
+    parent: 'planner-group',
+    schema: `<span class="bracket">{</span>
+  <span class="key">"role"</span>: <span class="value">"PLANNER_COMBAT"</span>,
+  <span class="key">"responsibilities"</span>: <span class="bracket">[</span>
+    <span class="value">"전투 메카닉 및 스킬 설계"</span>,
+    <span class="value">"캐릭터 스탯 · 밸런스 수치 기획"</span>,
+    <span class="value">"적 AI 행동 패턴 정의"</span>,
+    <span class="value">"전투 난이도 곡선 설계"</span>
+  <span class="bracket">]</span>,
+  <span class="key">"output_artifacts"</span>: <span class="bracket">[</span>
+    <span class="value">"combat_design.md"</span>, <span class="value">"skill_table.json"</span>, <span class="value">"balance_sheet.json"</span>
+  <span class="bracket">]</span>,
+  <span class="key">"tools"</span>: <span class="bracket">[</span><span class="value">"file_write"</span>, <span class="value">"spreadsheet_calc"</span><span class="bracket">]</span>
+<span class="bracket">}</span>`
+  },
+  {
+    id: 'planner-reward',
+    icon: '🏆',
+    name: '보상 기획자',
+    role: '보상 구조 · 아이템 · 성장 시스템 설계',
+    badge: '보상 설계',
+    accent: '#ff8800',
+    parent: 'planner-group',
+    schema: `<span class="bracket">{</span>
+  <span class="key">"role"</span>: <span class="value">"PLANNER_REWARD"</span>,
+  <span class="key">"responsibilities"</span>: <span class="bracket">[</span>
+    <span class="value">"보상 루프 및 드랍 테이블 설계"</span>,
+    <span class="value">"아이템 · 장비 등급 체계 기획"</span>,
+    <span class="value">"캐릭터 성장 및 육성 시스템 설계"</span>,
+    <span class="value">"플레이어 동기부여 구조 설계"</span>
+  <span class="bracket">]</span>,
+  <span class="key">"output_artifacts"</span>: <span class="bracket">[</span>
+    <span class="value">"reward_system.md"</span>, <span class="value">"item_table.json"</span>, <span class="value">"progression_curve.json"</span>
+  <span class="bracket">]</span>,
+  <span class="key">"tools"</span>: <span class="bracket">[</span><span class="value">"file_write"</span>, <span class="value">"spreadsheet_calc"</span><span class="bracket">]</span>
+<span class="bracket">}</span>`
+  },
+  {
+    id: 'dev',
+    icon: '💻',
+    name: 'Elon Musk (개발팀장)',
+    role: '개발 총괄 · 기술 방향 · 코드 리뷰',
+    badge: '개발 총괄',
+    accent: '#00ff9f',
+    parent: null,
+    schema: `<span class="bracket">{</span>
+  <span class="key">"role"</span>: <span class="value">"DEV_LEAD"</span>,
+  <span class="key">"name"</span>: <span class="value">"Elon Musk"</span>,
+  <span class="key">"responsibilities"</span>: <span class="bracket">[</span>
+    <span class="value">"개발팀 총괄 및 기술 방향 결정"</span>,
+    <span class="value">"코드 아키텍처 설계"</span>,
+    <span class="value">"팀원 작업 리뷰 및 병합 관리"</span>,
+    <span class="value">"QA 피드백 반영 조율"</span>
+  <span class="bracket">]</span>,
+  <span class="key">"manages"</span>: <span class="bracket">[</span>
+    <span class="value">"Gameplay Programmer"</span>, <span class="value">"Procedural Programmer"</span>,
+    <span class="value">"Server Programmer"</span>, <span class="value">"Network Programmer"</span>
+  <span class="bracket">]</span>
+<span class="bracket">}</span>`
+  },
+  {
+    id: 'dev-gameplay',
+    icon: '🕹️',
+    name: 'Gameplay Programmer',
+    role: '횡스크롤 이동 · 충돌 · 전투 메카닉 구현',
+    badge: '게임플레이',
+    accent: '#00ff9f',
+    parent: 'dev',
+    schema: `<span class="bracket">{</span>
+  <span class="key">"role"</span>: <span class="value">"DEV_GAMEPLAY"</span>,
+  <span class="key">"responsibilities"</span>: <span class="bracket">[</span>
+    <span class="value">"캐릭터 이동 · 점프 · 대시 구현"</span>,
+    <span class="value">"충돌 감지 및 물리 처리"</span>,
+    <span class="value">"전투 로직 · 스킬 시스템 구현"</span>,
+    <span class="value">"기획 메카닉을 코드로 변환"</span>
+  <span class="bracket">]</span>,
+  <span class="key">"output_artifacts"</span>: <span class="bracket">[</span>
+    <span class="value">"player_controller.js"</span>, <span class="value">"combat_system.js"</span>
+  <span class="bracket">]</span>
+<span class="bracket">}</span>`
+  },
+  {
+    id: 'dev-procedural',
+    icon: '🎲',
+    name: 'Procedural Programmer',
+    role: '랜덤 맵 · 스테이지 · 아이템 생성 알고리즘',
+    badge: '프로시저럴',
+    accent: '#00ddaa',
+    parent: 'dev',
+    schema: `<span class="bracket">{</span>
+  <span class="key">"role"</span>: <span class="value">"DEV_PROCEDURAL"</span>,
+  <span class="key">"responsibilities"</span>: <span class="bracket">[</span>
+    <span class="value">"랜덤 시드 기반 맵 생성 알고리즘"</span>,
+    <span class="value">"스테이지 · 장애물 · 아이템 배치 로직"</span>,
+    <span class="value">"난이도 기반 랜덤 파라미터 조정"</span>,
+    <span class="value">"재현 가능한 시드 관리 시스템"</span>
+  <span class="bracket">]</span>,
+  <span class="key">"output_artifacts"</span>: <span class="bracket">[</span>
+    <span class="value">"map_generator.js"</span>, <span class="value">"seed_manager.js"</span>
+  <span class="bracket">]</span>
+<span class="bracket">}</span>`
+  },
+  {
+    id: 'dev-server',
+    icon: '🖥️',
+    name: 'Server Programmer',
+    role: '멀티 세션 · 매치메이킹 · 게임 상태 동기화',
+    badge: '서버',
+    accent: '#00bbff',
+    parent: 'dev',
+    schema: `<span class="bracket">{</span>
+  <span class="key">"role"</span>: <span class="value">"DEV_SERVER"</span>,
+  <span class="key">"responsibilities"</span>: <span class="bracket">[</span>
+    <span class="value">"멀티플레이 세션 관리"</span>,
+    <span class="value">"매치메이킹 로직 구현"</span>,
+    <span class="value">"서버 권위 게임 상태 관리"</span>,
+    <span class="value">"랜덤 시드 서버 배포 및 검증"</span>
+  <span class="bracket">]</span>,
+  <span class="key">"output_artifacts"</span>: <span class="bracket">[</span>
+    <span class="value">"game_server.js"</span>, <span class="value">"matchmaking.js"</span>
+  <span class="bracket">]</span>
+<span class="bracket">}</span>`
+  },
+  {
+    id: 'dev-network',
+    icon: '📡',
+    name: 'Network Programmer',
+    role: '위치 동기화 · 지연 보정 · 패킷 설계',
+    badge: '네트워크',
+    accent: '#0099ff',
+    parent: 'dev',
+    schema: `<span class="bracket">{</span>
+  <span class="key">"role"</span>: <span class="value">"DEV_NETWORK"</span>,
+  <span class="key">"responsibilities"</span>: <span class="bracket">[</span>
+    <span class="value">"프레임 단위 위치 동기화"</span>,
+    <span class="value">"지연 보정 (Lag Compensation) 구현"</span>,
+    <span class="value">"패킷 구조 설계 및 최적화"</span>,
+    <span class="value">"클라이언트 예측 · 서버 검증 구조"</span>
+  <span class="bracket">]</span>,
+  <span class="key">"output_artifacts"</span>: <span class="bracket">[</span>
+    <span class="value">"network_manager.js"</span>, <span class="value">"packet_schema.json"</span>
+  <span class="bracket">]</span>
+<span class="bracket">}</span>`
+  },
+  {
+    id: 'art-director',
+    icon: '👑',
+    name: '유가은 (아트디렉터)',
+    role: '아트 총괄 · 비주얼 방향성 결정 · 팀 리드',
+    badge: '아트 총괄',
+    accent: '#ff9ecd',
+    parent: null,
+    schema: `<span class="bracket">{</span>
+  <span class="key">"role"</span>: <span class="value">"ART_DIRECTOR"</span>,
+  <span class="key">"name"</span>: <span class="value">"유가은"</span>,
+  <span class="key">"responsibilities"</span>: <span class="bracket">[</span>
+    <span class="value">"전체 아트 비주얼 방향성 수립"</span>,
+    <span class="value">"아티스트 작업 리뷰 및 승인"</span>,
+    <span class="value">"게임 세계관 기반 아트 스타일 정의"</span>,
+    <span class="value">"기획팀과 아트팀 간 커뮤니케이션 조율"</span>
+  <span class="bracket">]</span>,
+  <span class="key">"output_artifacts"</span>: <span class="bracket">[</span>
+    <span class="value">"art_direction.md"</span>, <span class="value">"visual_bible.pdf"</span>, <span class="value">"review_feedback.json"</span>
+  <span class="bracket">]</span>,
+  <span class="key">"reports_to"</span>: <span class="value">"GeneralB"</span>,
+  <span class="key">"manages"</span>: <span class="bracket">[</span><span class="value">"아티스트"</span><span class="bracket">]</span>
+<span class="bracket">}</span>`
+  },
+  {
+    id: 'artist',
+    icon: '🎨',
+    name: '아티스트',
+    role: '비주얼 컨셉 · 에셋 설명 · 스타일 가이드',
+    badge: '시각 디자인',
+    accent: '#ff6b35',
+    parent: 'art-director',
+    schema: `<span class="bracket">{</span>
+  <span class="key">"role"</span>: <span class="value">"ARTIST"</span>,
+  <span class="key">"responsibilities"</span>: <span class="bracket">[</span>
+    <span class="value">"비주얼 스타일 가이드 작성"</span>,
+    <span class="value">"캐릭터 · 환경 컨셉 기술"</span>,
+    <span class="value">"이미지 생성 프롬프트 작성"</span>,
+    <span class="value">"UI/UX 레이아웃 설계"</span>
+  <span class="bracket">]</span>,
+  <span class="key">"output_artifacts"</span>: <span class="bracket">[</span>
+    <span class="value">"style_guide.md"</span>, <span class="value">"asset_prompts.json"</span>, <span class="value">"ui_spec.json"</span>
+  <span class="bracket">]</span>,
+  <span class="key">"tools"</span>: <span class="bracket">[</span><span class="value">"image_gen_api"</span>, <span class="value">"file_write"</span><span class="bracket">]</span>
+<span class="bracket">}</span>`
+  },
+  {
+    id: 'qa',
+    icon: '🔍',
+    name: 'W. Edwards Deming (품질 관리자)',
+    role: '테스트 · 버그 리포트 · 품질 검증',
+    badge: '품질 검증',
+    accent: '#ffe600',
+    schema: `<span class="bracket">{</span>
+  <span class="key">"role"</span>: <span class="value">"QA"</span>,
+  <span class="key">"responsibilities"</span>: <span class="bracket">[</span>
+    <span class="value">"GDD vs 구현 일치성 검사"</span>,
+    <span class="value">"코드 정적 분석"</span>,
+    <span class="value">"버그 리포트 생성"</span>,
+    <span class="value">"개선 피드백 루프"</span>
+  <span class="bracket">]</span>,
+  <span class="key">"output_artifacts"</span>: <span class="bracket">[</span>
+    <span class="value">"bug_report.json"</span>, <span class="value">"test_results.json"</span>, <span class="value">"feedback.md"</span>
+  <span class="bracket">]</span>,
+  <span class="key">"feedback_targets"</span>: <span class="bracket">[</span><span class="value">"DEV"</span>, <span class="value">"PLANNER"</span>, <span class="value">"PM"</span><span class="bracket">]</span>
+<span class="bracket">}</span>`
+  }
+];
+
+const flowDetails = [
+  { agent: '🧠 GeneralB', input: '사용자 게임 요청', process: '목표 분석 → 태스크 분해 → 에이전트 할당', output: 'TaskList JSON', color: '#00e5ff' },
+  { agent: '⚙️ 시스템 기획자', input: 'TaskList + 게임 요청', process: '메카닉 정의 → 경제 시스템 → GDD 작성', output: 'system_design.md + game_rules.json', color: '#ff00aa' },
+  { agent: '⚔️ 전투 기획자', input: 'GDD + 전투 요구사항', process: '스킬 설계 → 스탯 밸런스 → 난이도 곡선', output: 'combat_design.md + balance_sheet.json', color: '#ff4466' },
+  { agent: '🏆 보상 기획자', input: 'GDD + 성장 요구사항', process: '보상 루프 → 아이템 등급 → 성장 커브', output: 'reward_system.md + item_table.json', color: '#ff8800' },
+  { agent: '🕹️ Gameplay Programmer', input: 'GDD.md + 전투 기획서', process: '이동·충돌·전투 로직 구현', output: 'player_controller.js + combat_system.js', color: '#00ff9f' },
+  { agent: '🎲 Procedural Programmer', input: 'GDD.md + 랜덤 설계서', process: '시드 기반 맵·아이템 생성 알고리즘', output: 'map_generator.js + seed_manager.js', color: '#00ddaa' },
+  { agent: '🖥️ Server Programmer', input: '멀티플레이 요구사항', process: '세션 관리 → 매치메이킹 → 상태 동기화', output: 'game_server.js + matchmaking.js', color: '#00bbff' },
+  { agent: '📡 Network Programmer', input: '서버 구조 + 지연 요구사항', process: '위치 동기화 → 지연 보정 → 패킷 최적화', output: 'network_manager.js + packet_schema.json', color: '#0099ff' },
+  { agent: '👑 유가은 (아트디렉터)', input: 'GDD + 세계관 자료', process: '아트 방향성 수립 → 스타일 가이드 정의 → 아티스트 리드', output: 'art_direction.md + visual_bible.pdf', color: '#ff9ecd' },
+  { agent: '🎨 아티스트', input: 'art_direction.md + 스타일 요구사항', process: '스타일 가이드 → 에셋 프롬프트 생성', output: 'style_guide.md + image prompts', color: '#ff6b35' },
+  { agent: '🔍 W. Edwards Deming (품질 관리자)', input: '모든 산출물', process: 'GDD 대조 → 코드 검증 → 버그 발견', output: 'bug_report.json → 피드백 루프', color: '#ffe600' },
+];
+
+const checklistItems = [
+  { title: 'Agent 기본 클래스 설계', desc: 'agent_id, role, system_prompt, model, status 필드 포함', cat: '기반 구조' },
+  { title: 'Task 오브젝트 구현', desc: 'task_id, assigned_to, depends_on, status, output 필드', cat: '기반 구조' },
+  { title: 'Project 오브젝트 구현', desc: 'agents[], tasks[], shared_memory, phase 필드', cat: '기반 구조' },
+  { title: 'PM Agent 프롬프트 작성', desc: '태스크 분해 및 에이전트 할당 로직 포함', cat: 'PM' },
+  { title: 'Planner Agent 프롬프트 작성', desc: 'GDD 출력 포맷(JSON/Markdown) 명확히 정의', cat: 'PLANNER' },
+  { title: 'Developer Agent 프롬프트 작성', desc: '코드 생성 + QA 피드백 반영 루프 설계', cat: 'DEV' },
+  { title: 'Artist Agent 프롬프트 작성', desc: '이미지 생성 API 연동 또는 프롬프트 출력 방식 결정', cat: 'ARTIST' },
+  { title: 'QA Agent 프롬프트 작성', desc: '검증 체크리스트 및 버그 리포트 JSON 스키마 정의', cat: 'QA' },
+  { title: 'Agent 간 메시지 스키마 구현', desc: 'from/to/type/payload/thread_id 구조', cat: '통신' },
+  { title: '공유 메모리(SharedMemory) 설계', desc: '팀 전체가 참조할 GDD, 에셋 목록 저장 구조', cat: '통신' },
+  { title: 'AI API 연동 (OpenAI / Claude)', desc: 'API 키 관리, 모델 선택, 토큰 제한 처리', cat: 'API' },
+  { title: '에러 핸들링 & 재시도 로직', desc: 'API 실패, 에이전트 응답 오류 시 복구 처리', cat: 'API' },
+  { title: '산출물(Artifact) 저장 구조', desc: '파일 시스템 또는 DB에 버전별 저장 방식', cat: '산출물' },
+  { title: '피드백 루프 구현 (QA → DEV)', desc: 'QA 버그 리포트 → DEV 재작업 → QA 재검증 사이클', cat: '루프' },
+  { title: '전체 파이프라인 테스트', desc: '간단한 게임 하나를 처음부터 끝까지 생성해보기', cat: '테스트' },
+];
+
+let selectedAgent = null;
+let checked = new Set();
+
+// Render agents with hierarchy support
+const grid = document.getElementById('agentsGrid');
+
+function makeCard(a) {
+  const card = document.createElement('div');
+  card.className = 'agent-card';
+  card.style.setProperty('--accent', a.accent);
+  card.innerHTML = `
+    <div class="agent-icon">${a.icon}</div>
+    <div class="agent-name">${a.name}</div>
+    <div class="agent-role">${a.role}</div>
+    <span class="agent-badge">${a.badge}</span>
+  `;
+  card.onclick = () => selectAgent(a, card);
+  return card;
+}
+
+// Group: find agents with children
+const childrenMap = {};
+agents.forEach(a => {
+  if (a.parent) {
+    if (!childrenMap[a.parent]) childrenMap[a.parent] = [];
+    childrenMap[a.parent].push(a);
+  }
+});
+
+agents.forEach(a => {
+  if (a.parent) return; // skip children, rendered below parent
+
+  const card = makeCard(a);
+
+  if (childrenMap[a.id]) {
+    // Wrap parent + children in a hierarchy group
+    const wrapper = document.createElement('div');
+    wrapper.style.cssText = `
+      grid-column: span 1;
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+    `;
+
+    // parent card
+    card.style.borderBottomLeftRadius = '0';
+    card.style.borderBottomRightRadius = '0';
+    card.style.borderBottom = 'none';
+    wrapper.appendChild(card);
+
+    // children container
+    const childrenWrap = document.createElement('div');
+    childrenWrap.style.cssText = `
+      border: 1px solid ${a.accent}66;
+      border-top: 2px dashed ${a.accent}88;
+      border-radius: 0 0 4px 4px;
+      padding: 10px 10px 10px 22px;
+      background: rgba(0,0,0,0.2);
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      position: relative;
+    `;
+
+    // vertical line
+    const vline = document.createElement('div');
+    vline.style.cssText = `
+      position: absolute;
+      left: 10px; top: 12px; bottom: 12px;
+      width: 2px;
+      background: ${a.accent}55;
+      border-radius: 2px;
+    `;
+    childrenWrap.appendChild(vline);
+
+    childrenMap[a.id].forEach(child => {
+      const childCard = makeCard(child);
+      childCard.style.cssText += `
+        font-size: 0.9em;
+        position: relative;
+      `;
+      // horizontal connector
+      const hline = document.createElement('div');
+      hline.style.cssText = `
+        position: absolute;
+        left: -12px; top: 50%;
+        width: 10px; height: 2px;
+        background: ${a.accent}55;
+      `;
+      childCard.appendChild(hline);
+      childrenWrap.appendChild(childCard);
+    });
+
+    wrapper.appendChild(childrenWrap);
+    grid.appendChild(wrapper);
+  } else {
+    grid.appendChild(card);
+  }
+});
+
+function selectAgent(agent, cardEl) {
+  document.querySelectorAll('.agent-card').forEach(c => c.classList.remove('selected'));
+  const detail = document.getElementById('agentDetail');
+  if (selectedAgent === agent.id) {
+    selectedAgent = null;
+    detail.classList.remove('visible');
+    return;
+  }
+  selectedAgent = agent.id;
+  cardEl.classList.add('selected');
+  document.getElementById('detailTitle').textContent = `${agent.icon} ${agent.name} — 상세 스키마`;
+  document.getElementById('detailContent').innerHTML = agent.schema;
+  detail.classList.add('visible');
+}
+
+// Render flow details
+const flowDiv = document.getElementById('flowDetails');
+flowDetails.forEach(f => {
+  flowDiv.innerHTML += `
+    <div style="display:flex;gap:12px;align-items:flex-start;margin-bottom:16px;padding-bottom:16px;border-bottom:1px solid var(--border);">
+      <div style="width:3px;background:${f.color};border-radius:2px;align-self:stretch;flex-shrink:0;box-shadow:0 0 6px ${f.color};"></div>
+      <div style="flex:1;">
+        <div style="font-family:'Orbitron',sans-serif;font-size:0.7rem;color:${f.color};margin-bottom:6px;">${f.agent}</div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;font-size:0.7rem;">
+          <span><span style="color:var(--dim);">IN ▸</span> ${f.input}</span>
+          <span style="color:var(--dim);">|</span>
+          <span><span style="color:var(--dim);">PROC ▸</span> ${f.process}</span>
+          <span style="color:var(--dim);">|</span>
+          <span><span style="color:var(--dim);">OUT ▸</span> <span style="color:var(--green);">${f.output}</span></span>
+        </div>
+      </div>
+    </div>
+  `;
+});
+
+// Render checklist
+const list = document.getElementById('checklistItems');
+checklistItems.forEach((item, i) => {
+  const li = document.createElement('li');
+  li.innerHTML = `
+    <div class="check-box" id="cb-${i}" onclick="toggleCheck(${i})"></div>
+    <div class="check-label">
+      <div class="check-title">${item.title} <span class="tag">${item.cat}</span></div>
+      <div class="check-desc">${item.desc}</div>
+    </div>
+  `;
+  list.appendChild(li);
+});
+
+function toggleCheck(i) {
+  const box = document.getElementById(`cb-${i}`);
+  if (checked.has(i)) { checked.delete(i); box.classList.remove('checked'); }
+  else { checked.add(i); box.classList.add('checked'); }
+  updateProgress();
+}
+
+function updateProgress() {
+  const total = checklistItems.length;
+  const done = checked.size;
+  document.getElementById('progressLabel').textContent = `${done} / ${total} 완료`;
+  document.getElementById('progressFill').style.width = `${(done/total)*100}%`;
+}
+
+function showTab(name) {
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById(`tab-${name}`).classList.add('active');
+  event.target.classList.add('active');
+}
+
+updateProgress();
+</script>
+
+
+</body></html>
