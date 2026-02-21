@@ -1,0 +1,502 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RANDOM NIGHT — Prototype Spec</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Share+Tech+Mono&display=swap');
+
+  :root {
+    --bg: #040812;
+    --panel: #080f1e;
+    --border: #0f2a4a;
+    --cyan: #00e5ff;
+    --magenta: #ff00aa;
+    --yellow: #ffe600;
+    --green: #00ff9f;
+    --red: #ff3860;
+    --orange: #ff9f43;
+    --purple: #a855f7;
+    --text: #c8dff0;
+    --dim: #3a5570;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Share Tech Mono', monospace;
+    min-height: 100vh;
+  }
+
+  body::before {
+    content: ''; position: fixed; inset: 0;
+    background-image:
+      linear-gradient(rgba(0,229,255,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0,229,255,0.03) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none; z-index: 0;
+  }
+
+  .scan-line {
+    position: fixed; top: 0; left: 0; right: 0; height: 2px;
+    background: linear-gradient(90deg, transparent, var(--magenta), transparent);
+    animation: scan 4s linear infinite; opacity: 0.2; pointer-events: none; z-index: 999;
+  }
+  @keyframes scan { 0% { top:0; } 100% { top:100vh; } }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+
+  .container { max-width: 1100px; margin: 0 auto; padding: 50px 20px; position: relative; z-index: 1; }
+
+  /* 헤더 */
+  header { text-align: center; margin-bottom: 50px; }
+
+  .header-badge {
+    display: inline-block; font-size: 0.65rem; color: var(--magenta);
+    border: 1px solid var(--magenta); padding: 3px 14px; letter-spacing: 4px;
+    margin-bottom: 16px; animation: pulse 2s infinite;
+  }
+
+  header h1 {
+    font-family: 'Orbitron', sans-serif;
+    font-size: clamp(1.6rem, 4vw, 2.8rem); font-weight: 900; letter-spacing: 0.08em;
+    background: linear-gradient(135deg, var(--magenta), var(--purple));
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+    margin-bottom: 8px;
+  }
+
+  header .subtitle { font-size: 0.72rem; color: var(--dim); letter-spacing: 3px; margin-bottom: 20px; }
+
+  .nav-btns { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
+  .nav-btn {
+    font-family: 'Share Tech Mono', monospace; font-size: 0.7rem;
+    padding: 6px 18px; text-decoration: none; letter-spacing: 2px; transition: all 0.2s;
+  }
+  .nav-btn.ghost { color: var(--dim); border: 1px solid var(--border); }
+  .nav-btn.ghost:hover { color: var(--cyan); border-color: var(--cyan); }
+  .nav-btn.active { color: var(--magenta); border: 1px solid var(--magenta); }
+
+  /* 섹션 */
+  .section { margin-bottom: 48px; }
+
+  .section-title {
+    font-family: 'Orbitron', sans-serif; font-size: 0.75rem; font-weight: 700;
+    letter-spacing: 4px; text-transform: uppercase;
+    margin-bottom: 20px; display: flex; align-items: center; gap: 12px;
+  }
+  .section-title::after { content:''; flex:1; height:1px; opacity:0.4; }
+  .section-title.cyan  { color: var(--cyan);    } .section-title.cyan::after  { background: linear-gradient(90deg, var(--cyan), transparent); }
+  .section-title.mag   { color: var(--magenta); } .section-title.mag::after   { background: linear-gradient(90deg, var(--magenta), transparent); }
+  .section-title.yel   { color: var(--yellow);  } .section-title.yel::after   { background: linear-gradient(90deg, var(--yellow), transparent); }
+  .section-title.grn   { color: var(--green);   } .section-title.grn::after   { background: linear-gradient(90deg, var(--green), transparent); }
+  .section-title.pur   { color: var(--purple);  } .section-title.pur::after   { background: linear-gradient(90deg, var(--purple), transparent); }
+  .section-title.ora   { color: var(--orange);  } .section-title.ora::after   { background: linear-gradient(90deg, var(--orange), transparent); }
+
+  /* 부서 배지 */
+  .dept-badge {
+    display: inline-flex; align-items: center; gap: 8px;
+    font-size: 0.65rem; letter-spacing: 3px; padding: 4px 14px; border: 1px solid;
+    margin-bottom: 16px; font-weight: 700;
+  }
+  .dept-badge.plan { color: var(--cyan);    border-color: var(--cyan);    }
+  .dept-badge.dev  { color: var(--magenta); border-color: var(--magenta); }
+  .dept-badge.ui   { color: var(--purple);  border-color: var(--purple);  }
+
+  /* 카드 */
+  .card {
+    background: var(--panel); border: 1px solid var(--border);
+    padding: 20px 24px; margin-bottom: 16px; transition: all 0.2s;
+  }
+  .card:hover { border-color: var(--dim); }
+  .card.accent-cyan   { border-left: 3px solid var(--cyan); }
+  .card.accent-mag    { border-left: 3px solid var(--magenta); }
+  .card.accent-yel    { border-left: 3px solid var(--yellow); }
+  .card.accent-grn    { border-left: 3px solid var(--green); }
+  .card.accent-pur    { border-left: 3px solid var(--purple); }
+  .card.accent-ora    { border-left: 3px solid var(--orange); }
+
+  .card-title { font-size: 0.9rem; color: var(--text); margin-bottom: 12px; font-weight: 700; }
+  .card-body  { font-size: 0.75rem; color: var(--dim); line-height: 2; }
+  .card-body li { list-style: none; padding-left: 16px; position: relative; }
+  .card-body li::before { content: '›'; position: absolute; left: 0; color: var(--cyan); }
+
+  /* 등급 테이블 */
+  .grade-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 10px; margin-bottom: 20px; }
+
+  .grade-chip {
+    background: var(--panel); border: 1px solid;
+    padding: 12px 14px; text-align: center;
+  }
+  .grade-name { font-family: 'Orbitron', sans-serif; font-size: 0.8rem; font-weight: 700; margin-bottom: 4px; }
+  .grade-prob { font-size: 0.65rem; color: var(--dim); }
+
+  /* 아이템 데이터 구조 */
+  .code-block {
+    background: #020608; border: 1px solid var(--border);
+    padding: 20px; font-size: 0.72rem; line-height: 2;
+    overflow-x: auto; margin-bottom: 16px;
+  }
+  .code-key   { color: var(--cyan); }
+  .code-val   { color: var(--green); }
+  .code-str   { color: var(--yellow); }
+  .code-com   { color: var(--dim); }
+  .code-grade-1 { color: #888; }
+  .code-grade-2 { color: var(--green); }
+  .code-grade-3 { color: #4fc3f7; }
+  .code-grade-4 { color: var(--purple); }
+  .code-grade-5 { color: var(--orange); }
+  .code-grade-6 { color: var(--yellow); text-shadow: 0 0 8px var(--yellow); }
+
+  /* 레이아웃 다이어그램 */
+  .layout-diagram {
+    background: #020810; border: 1px solid var(--border);
+    padding: 24px; font-size: 0.7rem; line-height: 1.6;
+  }
+
+  .layout-row {
+    border: 1px dashed; padding: 12px 16px; margin-bottom: 8px;
+    display: flex; align-items: center; gap: 12px;
+  }
+  .layout-row.top    { border-color: var(--cyan);    color: var(--cyan); }
+  .layout-row.mid    { border-color: var(--magenta); color: var(--magenta); min-height: 80px; }
+  .layout-row.popup  { border-color: var(--yellow);  color: var(--yellow); }
+  .layout-row.bottom { border-color: var(--purple);  color: var(--purple); }
+
+  .layout-label { font-family: 'Orbitron', sans-serif; font-size: 0.65rem; font-weight: 700; min-width: 80px; }
+  .layout-desc  { color: var(--dim); font-size: 0.68rem; }
+
+  /* 메타 프로그레션 */
+  .meta-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 14px; }
+
+  .meta-card {
+    background: var(--panel); border: 1px solid var(--border);
+    padding: 18px 20px;
+  }
+  .meta-icon  { font-size: 1.6rem; margin-bottom: 8px; }
+  .meta-title { font-size: 0.85rem; color: var(--text); margin-bottom: 8px; font-weight: 700; }
+  .meta-desc  { font-size: 0.72rem; color: var(--dim); line-height: 1.8; }
+
+  /* 도파민 루프 흐름 */
+  .loop-flow {
+    display: flex; align-items: center; gap: 0; flex-wrap: wrap;
+    margin-bottom: 20px;
+  }
+  .loop-step {
+    background: var(--panel); border: 1px solid var(--border);
+    padding: 10px 16px; font-size: 0.7rem; text-align: center;
+    min-width: 120px; flex: 1;
+  }
+  .loop-step .step-label { font-size: 0.58rem; color: var(--dim); letter-spacing: 2px; margin-bottom: 4px; }
+  .loop-step .step-text  { color: var(--text); }
+  .loop-arrow { color: var(--cyan); font-size: 1.2rem; padding: 0 4px; flex-shrink: 0; }
+
+  /* 유지 사항 박스 */
+  .keep-box {
+    background: var(--panel);
+    border: 1px solid var(--green);
+    padding: 16px 20px; position: relative;
+  }
+  .keep-box::before {
+    content: '// 기존 구현 유지';
+    position: absolute; top: -10px; left: 16px;
+    background: var(--bg); padding: 0 8px;
+    font-size: 0.62rem; color: var(--green); letter-spacing: 2px;
+  }
+  .keep-box ul { font-size: 0.75rem; color: var(--dim); line-height: 2; list-style: none; }
+  .keep-box li { padding-left: 16px; position: relative; }
+  .keep-box li::before { content: '✓'; position: absolute; left: 0; color: var(--green); }
+
+  footer {
+    text-align: center; margin-top: 60px; padding-top: 24px;
+    border-top: 1px solid var(--border);
+    font-size: 0.62rem; color: var(--dim); letter-spacing: 2px;
+  }
+</style>
+</head>
+<body>
+<div class="scan-line"></div>
+<div class="container">
+
+  <header>
+    <div class="header-badge">PROTOTYPE SPEC v1.0</div>
+    <h1>PROTOTYPE SPEC</h1>
+    <p class="subtitle">부서별 업무 할당 · 시스템 설계 · 초기 스펙 정의</p>
+    <div class="nav-btns">
+      <a href="index.html" class="nav-btn ghost">⌂ HOME</a>
+      <a href="org-chart.html" class="nav-btn ghost">👥 TEAM</a>
+      <a href="devlog.html" class="nav-btn ghost">📋 DEV LOG</a>
+      <a href="roadmap.html" class="nav-btn ghost">🗺️ ROADMAP</a>
+      <span class="nav-btn active">📐 SPEC</span>
+    </div>
+  </header>
+
+  <!-- ── 도파민 루프 ── -->
+  <section class="section">
+    <div class="section-title mag">핵심 루프 // CORE LOOP</div>
+    <div class="loop-flow">
+      <div class="loop-step"><div class="step-label">STEP 1</div><div class="step-text">자동 전투<br>전진</div></div>
+      <div class="loop-arrow">→</div>
+      <div class="loop-step"><div class="step-label">STEP 2</div><div class="step-text">킬 카운트<br>누적</div></div>
+      <div class="loop-arrow">→</div>
+      <div class="loop-step"><div class="step-label">STEP 3</div><div class="step-text">3개 선택지<br>팝업</div></div>
+      <div class="loop-arrow">→</div>
+      <div class="loop-step"><div class="step-label">STEP 4</div><div class="step-text">아이템/버프<br>획득</div></div>
+      <div class="loop-arrow">→</div>
+      <div class="loop-step"><div class="step-label">STEP 5</div><div class="step-text">캐릭터<br>강화</div></div>
+      <div class="loop-arrow">↩</div>
+    </div>
+  </section>
+
+  <!-- ══════════════════════════════
+       기획팀
+  ══════════════════════════════ -->
+  <section class="section">
+    <div class="dept-badge plan">💡 기획팀 · Steve Jobs</div>
+    <div class="section-title cyan">아이템 시스템 // ITEM SYSTEM</div>
+
+    <!-- 등급 시스템 -->
+    <div class="card accent-cyan" style="margin-bottom:20px;">
+      <div class="card-title">아이템 등급 체계 (디아블로식)</div>
+      <div class="grade-grid">
+        <div class="grade-chip" style="border-color:#888;">
+          <div class="grade-name code-grade-1">일반 NORMAL</div>
+          <div class="grade-prob">드롭률 50%</div>
+          <div class="grade-prob">옵션 0~1개</div>
+        </div>
+        <div class="grade-chip" style="border-color:var(--green);">
+          <div class="grade-name code-grade-2">매직 MAGIC</div>
+          <div class="grade-prob">드롭률 30%</div>
+          <div class="grade-prob">옵션 1~2개</div>
+        </div>
+        <div class="grade-chip" style="border-color:#4fc3f7;">
+          <div class="grade-name code-grade-3">레어 RARE</div>
+          <div class="grade-prob">드롭률 14%</div>
+          <div class="grade-prob">옵션 2~3개</div>
+        </div>
+        <div class="grade-chip" style="border-color:var(--purple);">
+          <div class="grade-name code-grade-4">유니크 UNIQUE</div>
+          <div class="grade-prob">드롭률 4%</div>
+          <div class="grade-prob">고정 특수 옵션</div>
+        </div>
+        <div class="grade-chip" style="border-color:var(--orange);">
+          <div class="grade-name code-grade-5">고대 ANCIENT</div>
+          <div class="grade-prob">드롭률 1.5%</div>
+          <div class="grade-prob">수치 130% 상승</div>
+        </div>
+        <div class="grade-chip" style="border-color:var(--yellow);">
+          <div class="grade-name code-grade-6">신성 SACRED</div>
+          <div class="grade-prob">드롭률 0.5%</div>
+          <div class="grade-prob">수치 160% + 특수</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 아이템 데이터 구조 -->
+    <div class="card accent-cyan">
+      <div class="card-title">아이템 데이터 구조 예시</div>
+      <div class="code-block">
+<span class="code-com">// 아이템 오브젝트 구조</span>
+{
+  <span class="code-key">id</span>:       <span class="code-str">"sword_001"</span>,
+  <span class="code-key">name</span>:     <span class="code-str">"철제 검"</span>,
+  <span class="code-key">slot</span>:     <span class="code-str">"weapon"</span>,   <span class="code-com">// weapon / helm / armor / boots / ring / necklace</span>
+  <span class="code-key">grade</span>:    <span class="code-str">"rare"</span>,     <span class="code-com">// normal / magic / rare / unique / ancient / sacred</span>
+  <span class="code-key">baseAtk</span>:  <span class="code-val">120</span>,         <span class="code-com">// 기본 공격력 (등급에 따라 배율 적용)</span>
+  <span class="code-key">gradeMulti</span>: <span class="code-val">1.0</span>,       <span class="code-com">// normal=1.0 / magic=1.1 / rare=1.2 / unique=1.3 / ancient=1.3 / sacred=1.6</span>
+
+  <span class="code-com">// 랜덤 옵션 (접사 시스템)</span>
+  <span class="code-key">affixes</span>: [
+    { <span class="code-key">type</span>: <span class="code-str">"atkSpeed"</span>,  <span class="code-key">value</span>: <span class="code-val">15</span>,  <span class="code-key">unit</span>: <span class="code-str">"%"</span>  },  <span class="code-com">// 공격속도 +15%</span>
+    { <span class="code-key">type</span>: <span class="code-str">"critRate"</span>,   <span class="code-key">value</span>: <span class="code-val">8</span>,   <span class="code-key">unit</span>: <span class="code-str">"%"</span>  },  <span class="code-com">// 치명타 +8%</span>
+    { <span class="code-key">type</span>: <span class="code-str">"lifeSteal"</span>,  <span class="code-key">value</span>: <span class="code-val">5</span>,   <span class="code-key">unit</span>: <span class="code-str">"%"</span>  },  <span class="code-com">// 흡혈 +5%</span>
+  ],
+
+  <span class="code-com">// 접사 풀 (랜덤 산출 범위)</span>
+  <span class="code-key">affixRanges</span>: {
+    <span class="code-key">atkSpeed</span>:  [<span class="code-val">5</span>, <span class="code-val">25</span>],   <span class="code-com">// 5~25% 랜덤</span>
+    <span class="code-key">critRate</span>:  [<span class="code-val">3</span>, <span class="code-val">15</span>],
+    <span class="code-key">lifeSteal</span>: [<span class="code-val">2</span>, <span class="code-val">10</span>],
+    <span class="code-key">atkBonus</span>:  [<span class="code-val">10</span>, <span class="code-val">50</span>],
+    <span class="code-key">defBonus</span>:  [<span class="code-val">10</span>, <span class="code-val">50</span>],
+    <span class="code-key">hpBonus</span>:   [<span class="code-val">20</span>, <span class="code-val">100</span>],
+    <span class="code-key">moveSpeed</span>: [<span class="code-val">3</span>, <span class="code-val">12</span>],
+  }
+}
+
+<span class="code-com">// 아이템 생성 함수 (예시)</span>
+<span class="code-key">function</span> generateItem(slot, stage) {
+  <span class="code-key">const</span> grade = rollGrade(stage);        <span class="code-com">// 스테이지 높을수록 고급 등급 확률 상승</span>
+  <span class="code-key">const</span> affixCount = getAffixCount(grade); <span class="code-com">// 등급별 옵션 개수</span>
+  <span class="code-key">const</span> affixes = rollAffixes(affixCount); <span class="code-com">// 풀에서 랜덤 추출 + 수치 랜덤화</span>
+  <span class="code-key">return</span> { slot, grade, affixes, ... };
+}
+      </div>
+    </div>
+
+    <!-- 사망 패널티 완화 -->
+    <div class="section-title cyan" style="margin-top:32px;">사망 패널티 // DEATH SYSTEM</div>
+    <div class="card accent-orange">
+      <div class="card-title">성취감 유지 전략</div>
+      <ul class="card-body">
+        <li>장착 중인 아이템 6슬롯은 사망 후에도 <strong style="color:var(--green)">100% 유지</strong></li>
+        <li>인벤토리(미장착) 아이템은 50% 확률로 드롭</li>
+        <li>획득 골드의 30%만 손실, 70% 유지</li>
+        <li>사망 시 "영혼의 파편" 획득 → 영구 스탯 강화(메타 프로그레션) 재화로 전환</li>
+        <li>연속 사망 시 "복수 버프" 발동 → 다음 판 공격력 +20% 보너스</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- ══════════════════════════════
+       개발팀
+  ══════════════════════════════ -->
+  <section class="section">
+    <div class="dept-badge dev">⚡ 개발팀 · Elon Musk</div>
+    <div class="section-title mag">전투 및 스폰 로직 // COMBAT LOGIC</div>
+
+    <div class="card accent-mag">
+      <div class="card-title">자동 전투 루프 스펙</div>
+      <ul class="card-body">
+        <li>플레이어: 고정 속도 전진 (scrollX += PL.spd * 60 * dt) — Freeze 없이 항상 이동</li>
+        <li>몬스터: 오른쪽에서 스폰, 플레이어 방향으로 등속 접근 (m.wx -= m.spd * 60 * dt)</li>
+        <li>충돌 판정: hbw 히트박스 기준, 접촉 시 자동 공격 발동</li>
+        <li>공격 타이밍: PL.atkTimer 카운트다운, 0 도달 시 근접 타격 + 파티클</li>
+        <li>스폰 로직: scheduleSpawn() — 2~3초 랜덤 딜레이, 스테이지별 스폰 속도 증가</li>
+      </ul>
+    </div>
+
+    <div class="card accent-mag">
+      <div class="card-title">보상 팝업 시스템 스펙</div>
+      <ul class="card-body">
+        <li>트리거 조건: killCount % N === 0 (N = 2~3 랜덤) 또는 보스 처치 시</li>
+        <li>팝업 내용: 3개 선택지 — 아이템 / 골드 / 버프 / (꽝) 중 랜덤 구성</li>
+        <li>선택 즉시: 스탯 업데이트, 슬롯 교체 확인(동일 슬롯 시) 팝업 발동</li>
+        <li>아이템 교체 팝업: 현재 장착 vs 신규 아이템 스탯 비교 표시 후 선택</li>
+        <li>꽝 확률: 10~15% (도파민 텐션 유지용)</li>
+      </ul>
+    </div>
+
+    <div class="card accent-mag">
+      <div class="card-title">스테이지 난이도 스케일링</div>
+      <ul class="card-body">
+        <li>스테이지 N마다 몬스터 HP × 1.15, 공격력 × 1.10</li>
+        <li>보스는 10스테이지마다 등장, 페이즈 전환 패턴 보유</li>
+        <li>플레이어 아이템 등급 상한도 스테이지 진행에 따라 해금</li>
+        <li>무한 스케일링 — 클리어 불가 지점 도달이 목표 (디아블로 나락 방식)</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- ══════════════════════════════
+       UI/UX팀
+  ══════════════════════════════ -->
+  <section class="section">
+    <div class="dept-badge ui">🎨 UI/UX팀 · 유가은</div>
+    <div class="section-title pur">화면 레이아웃 // SCREEN LAYOUT</div>
+
+    <div class="card accent-pur" style="margin-bottom:20px;">
+      <div class="card-title">화면 구성 다이어그램</div>
+      <div class="layout-diagram">
+        <div class="layout-row top">
+          <div class="layout-label">TOP BAR</div>
+          <div class="layout-desc">HP바 · 스테이지 번호 · 킬카운트 · 골드 · 경과 시간</div>
+        </div>
+        <div class="layout-row mid">
+          <div class="layout-label">BATTLE</div>
+          <div class="layout-desc">횡스크롤 전투 화면 (Canvas 메인 영역) — 캐릭터, 몬스터, 배경, 파티클, 검 스윙 이펙트</div>
+        </div>
+        <div class="layout-row popup" style="display:none" id="popupRow">
+          <div class="layout-label">POPUP</div>
+          <div class="layout-desc">전투 위에 오버레이 — 3개 선택지 카드 UI (등급별 빛 연출)</div>
+        </div>
+        <div class="layout-row popup">
+          <div class="layout-label">POPUP</div>
+          <div class="layout-desc">전투 일시정지 오버레이 — 3개 선택지 카드 (등급 연출: 일반=흰빛 / 레어=파랑 / 유니크=보라 / 신성=금색 기둥)</div>
+        </div>
+        <div class="layout-row bottom">
+          <div class="layout-label">ITEM SLOTS</div>
+          <div class="layout-desc">하단 고정 — 투구 · 갑옷 · 신발 · 무기 · 반지 · 목걸이 슬롯 상시 노출 (등급 색상 테두리 표시)</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card accent-pur">
+      <div class="card-title">도파민 연출 스펙</div>
+      <ul class="card-body">
+        <li><strong style="color:var(--text)">카드 뒤집기:</strong> 선택지 카드 등장 시 flip 애니메이션 (0.3s) + 등급별 글로우</li>
+        <li><strong style="color:var(--text)">빛 기둥 이펙트:</strong> 유니크 이상 아이템 획득 시 수직 빛 기둥 + 파티클 폭발</li>
+        <li><strong style="color:var(--text)">등급 색상:</strong> 일반=회색 / 매직=초록 / 레어=파랑 / 유니크=보라 / 고대=주황 / 신성=금색</li>
+        <li><strong style="color:var(--text)">슬롯 강화 표시:</strong> 아이템 교체 시 슬롯 테두리 펄스 애니메이션</li>
+        <li><strong style="color:var(--text)">킬 피드백:</strong> 몬스터 처치 시 데미지 숫자 팝업 (치명타는 크게 + 빨간색)</li>
+        <li><strong style="color:var(--text)">사망 연출:</strong> 화면 레드 플래시 → 슬로우 모션 → 결과 화면</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- ══════════════════════════════
+       메타 프로그레션
+  ══════════════════════════════ -->
+  <section class="section">
+    <div class="section-title grn">메타 프로그레션 // META PROGRESSION</div>
+    <p style="font-size:0.75rem;color:var(--dim);margin-bottom:20px;line-height:1.8;">사망 후 재도전 시 유저가 가져가는 영구 성장 시스템. 허탈함 없이 "다음 판은 더 잘할 수 있다"는 기대감 유지.</p>
+
+    <div class="meta-grid">
+      <div class="meta-card">
+        <div class="meta-icon">💀</div>
+        <div class="meta-title">영혼의 파편</div>
+        <div class="meta-desc">사망 시 획득. 스테이지 도달 기록에 비례. 영구 강화 재화로 사용. 다음 판 시작 시 기초 스탯 소폭 상승.</div>
+      </div>
+      <div class="meta-card">
+        <div class="meta-icon">📈</div>
+        <div class="meta-title">영구 스탯 트리</div>
+        <div class="meta-desc">HP 상한 / 기본 공격력 / 골드 획득률 / 아이템 등급 확률 보정 등을 파편으로 영구 강화. 판마다 조금씩 강해지는 구조.</div>
+      </div>
+      <div class="meta-card">
+        <div class="meta-icon">🏆</div>
+        <div class="meta-title">최고 기록 시스템</div>
+        <div class="meta-desc">최대 도달 스테이지 기록 보존. 갱신 시 보너스 파편 지급. 디아블로 나락처럼 기록 경쟁이 동기부여.</div>
+      </div>
+      <div class="meta-card">
+        <div class="meta-icon">🎴</div>
+        <div class="meta-title">유물 시스템 (추후)</div>
+        <div class="meta-desc">특정 스테이지 도달 시 영구 유물 해금. 판마다 시작 버프로 적용. 선택지가 생겨 빌드 다양성 확보.</div>
+      </div>
+      <div class="meta-card">
+        <div class="meta-icon">⚔️</div>
+        <div class="meta-title">장착 아이템 유지</div>
+        <div class="meta-desc">사망 시 장착 중인 6슬롯 아이템 100% 보존. 유저가 공들여 맞춘 빌드를 잃지 않아 다음 도전 의욕 유지.</div>
+      </div>
+      <div class="meta-card">
+        <div class="meta-icon">🔥</div>
+        <div class="meta-title">복수 버프</div>
+        <div class="meta-desc">연속 사망 횟수에 비례해 다음 판 공격력 보너스 +10~30%. 어려울수록 역전 기회 상승. 좌절감 완화.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════════════════════════
+       기존 구현 유지 사항
+  ══════════════════════════════ -->
+  <section class="section">
+    <div class="section-title grn">기존 구현 유지 // KEEP AS-IS</div>
+    <div class="keep-box">
+      <ul>
+        <li>동일 슬롯 아이템 등장 시 교체 여부 확인 팝업 (교체하기 / 유지하기)</li>
+        <li>6부위 슬롯 (투구 / 갑옷 / 신발 / 무기 / 반지 / 목걸이)</li>
+        <li>플레이어+몬스터 항상 이동 구조 (Freeze 버그 수정 결과)</li>
+        <li>hbw 히트박스 기반 충돌 판정</li>
+        <li>킬카운트 기반 상자 트리거 (2~3킬마다)</li>
+        <li>2~3초 랜덤 스폰 딜레이</li>
+      </ul>
+    </div>
+  </section>
+
+  <footer>
+    ⚡ TEAM LIGHTNING · RANDOM NIGHT PROTOTYPE SPEC · 기획팀 × 개발팀 × UI팀 · 2026
+  </footer>
+
+</div>
+</body>
+</html>

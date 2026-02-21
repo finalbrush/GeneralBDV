@@ -1,0 +1,540 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RANDOM NIGHT — Roadmap</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Share+Tech+Mono&display=swap');
+
+  :root {
+    --bg: #040812;
+    --panel: #080f1e;
+    --border: #0f2a4a;
+    --cyan: #00e5ff;
+    --magenta: #ff00aa;
+    --yellow: #ffe600;
+    --green: #00ff9f;
+    --red: #ff3860;
+    --orange: #ff9f43;
+    --text: #c8dff0;
+    --dim: #3a5570;
+    --p1: #00e5ff;
+    --p2: #ff00aa;
+    --p3: #ffe600;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Share Tech Mono', monospace;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  body::before {
+    content: '';
+    position: fixed; inset: 0;
+    background-image:
+      linear-gradient(rgba(0,229,255,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0,229,255,0.03) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none; z-index: 0;
+  }
+
+  .scan-line {
+    position: fixed; top: 0; left: 0; right: 0; height: 2px;
+    background: linear-gradient(90deg, transparent, var(--yellow), transparent);
+    animation: scan 5s linear infinite; opacity: 0.2; pointer-events: none; z-index: 999;
+  }
+  @keyframes scan { 0% { top: 0; } 100% { top: 100vh; } }
+
+  .container { max-width: 1100px; margin: 0 auto; padding: 50px 20px; position: relative; z-index: 1; }
+
+  /* ── 헤더 ── */
+  header { text-align: center; margin-bottom: 50px; }
+
+  .header-badge {
+    display: inline-block; font-size: 0.65rem; color: var(--yellow);
+    border: 1px solid var(--yellow); padding: 3px 14px; letter-spacing: 4px; margin-bottom: 16px;
+    animation: pulse 2s infinite;
+  }
+  @keyframes pulse { 0%,100% { opacity:1; } 50% { opacity:0.4; } }
+
+  header h1 {
+    font-family: 'Orbitron', sans-serif;
+    font-size: clamp(1.8rem, 5vw, 3rem); font-weight: 900; letter-spacing: 0.08em;
+    background: linear-gradient(135deg, var(--yellow), var(--orange));
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+    margin-bottom: 8px;
+  }
+
+  header .subtitle { font-size: 0.72rem; color: var(--dim); letter-spacing: 3px; margin-bottom: 20px; }
+
+  .nav-btns { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
+  .nav-btn {
+    font-family: 'Share Tech Mono', monospace; font-size: 0.7rem;
+    padding: 6px 18px; text-decoration: none; letter-spacing: 2px; transition: all 0.2s;
+  }
+  .nav-btn.ghost { color: var(--dim); border: 1px solid var(--border); }
+  .nav-btn.ghost:hover { color: var(--cyan); border-color: var(--cyan); }
+  .nav-btn.active { color: var(--yellow); border: 1px solid var(--yellow); box-shadow: 0 0 12px rgba(255,230,0,0.2); }
+
+  /* ── 섹션 타이틀 ── */
+  .section-title {
+    font-family: 'Orbitron', sans-serif; font-size: 0.75rem; font-weight: 700;
+    color: var(--yellow); letter-spacing: 4px; text-transform: uppercase;
+    margin-bottom: 20px; display: flex; align-items: center; gap: 12px;
+  }
+  .section-title::after { content: ''; flex: 1; height: 1px; background: linear-gradient(90deg, var(--yellow), transparent); opacity: 0.4; }
+
+  /* ── 논의 배너 ── */
+  .discussion-banner {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--yellow);
+    padding: 16px 20px;
+    margin-bottom: 40px;
+    font-size: 0.72rem;
+    color: var(--dim);
+    line-height: 1.8;
+  }
+  .discussion-banner .speakers { display: flex; gap: 20px; margin-bottom: 10px; flex-wrap: wrap; }
+  .speaker-tag {
+    font-size: 0.65rem; letter-spacing: 2px; padding: 2px 10px; border: 1px solid;
+  }
+  .speaker-tag.jobs  { color: var(--cyan);    border-color: var(--cyan); }
+  .speaker-tag.elon  { color: var(--magenta); border-color: var(--magenta); }
+  .speech { margin-bottom: 8px; padding-left: 12px; border-left: 2px solid var(--border); }
+  .speech .who { font-size: 0.62rem; letter-spacing: 2px; margin-bottom: 4px; }
+  .speech.jobs .who { color: var(--cyan); }
+  .speech.elon .who { color: var(--magenta); }
+
+  /* ── 메인 로드맵 타임라인 ── */
+  .roadmap-wrap { position: relative; }
+
+  /* 세로 연결선 */
+  .roadmap-wrap::before {
+    content: ''; position: absolute; left: 18px; top: 0; bottom: 0; width: 2px;
+    background: linear-gradient(180deg, var(--p1), var(--p2), var(--p3), transparent);
+    opacity: 0.5;
+  }
+
+  .phase-block { margin-bottom: 48px; padding-left: 56px; position: relative; }
+
+  .phase-node {
+    position: absolute; left: 0; top: 0;
+    width: 38px; height: 38px;
+    border-radius: 50%;
+    border: 2px solid;
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Orbitron', sans-serif; font-size: 0.75rem; font-weight: 900;
+    background: var(--bg);
+  }
+  .phase-node.p1 { border-color: var(--p1); color: var(--p1); box-shadow: 0 0 16px rgba(0,229,255,0.3); }
+  .phase-node.p2 { border-color: var(--p2); color: var(--p2); box-shadow: 0 0 16px rgba(255,0,170,0.3); }
+  .phase-node.p3 { border-color: var(--p3); color: var(--p3); box-shadow: 0 0 16px rgba(255,230,0,0.3); }
+
+  .phase-header {
+    background: var(--panel); border: 1px solid;
+    padding: 16px 20px; margin-bottom: 16px;
+    display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px;
+  }
+  .phase-header.p1 { border-color: var(--p1); }
+  .phase-header.p2 { border-color: var(--p2); }
+  .phase-header.p3 { border-color: var(--p3); }
+
+  .phase-name { font-family: 'Orbitron', sans-serif; font-size: 1rem; font-weight: 700; }
+  .phase-name.p1 { color: var(--p1); }
+  .phase-name.p2 { color: var(--p2); }
+  .phase-name.p3 { color: var(--p3); }
+
+  .phase-status {
+    font-size: 0.62rem; letter-spacing: 3px; padding: 3px 12px; border: 1px solid;
+    display: flex; align-items: center; gap: 6px;
+  }
+  .phase-status.active  { color: var(--green);  border-color: var(--green);  }
+  .phase-status.waiting { color: var(--dim);     border-color: var(--border); }
+
+  .phase-dot { width: 6px; height: 6px; border-radius: 50%; }
+  .phase-dot.active { background: var(--green); animation: pulse 1.5s infinite; box-shadow: 0 0 6px var(--green); }
+  .phase-dot.waiting { background: var(--dim); }
+
+  /* ── 단계 카드 ── */
+  .steps-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 12px; }
+
+  .step-card {
+    background: var(--panel); border: 1px solid var(--border);
+    padding: 16px 18px; position: relative; transition: all 0.2s;
+  }
+  .step-card:hover { border-color: var(--dim); transform: translateY(-2px); }
+  .step-card.done   { border-left: 3px solid var(--green); }
+  .step-card.active { border-left: 3px solid var(--yellow); }
+  .step-card.todo   { border-left: 3px solid var(--border); }
+
+  .step-num {
+    font-family: 'Orbitron', sans-serif; font-size: 1.6rem; font-weight: 900;
+    opacity: 0.12; position: absolute; top: 10px; right: 14px; line-height: 1;
+  }
+
+  .step-tag {
+    font-size: 0.58rem; letter-spacing: 2px; padding: 2px 8px; border: 1px solid;
+    margin-bottom: 10px; display: inline-block;
+  }
+  .step-tag.pm   { color: var(--cyan);    border-color: var(--cyan);    }
+  .step-tag.team { color: var(--magenta); border-color: var(--magenta); }
+  .step-tag.done { color: var(--green);   border-color: var(--green);   }
+
+  .step-title { font-size: 0.85rem; color: var(--text); margin-bottom: 8px; font-weight: 700; }
+  .step-desc  { font-size: 0.7rem; color: var(--dim); line-height: 1.8; }
+  .step-desc li { list-style: none; padding-left: 14px; position: relative; }
+  .step-desc li::before { content: '›'; position: absolute; left: 0; color: var(--cyan); }
+
+  .step-who {
+    margin-top: 12px; font-size: 0.62rem; color: var(--dim); letter-spacing: 1px;
+    display: flex; align-items: center; gap: 6px;
+  }
+  .who-dot { width: 5px; height: 5px; border-radius: 50%; }
+  .who-dot.pm   { background: var(--cyan); }
+  .who-dot.team { background: var(--magenta); }
+  .who-dot.both { background: var(--yellow); }
+
+  /* ── 범례 ── */
+  .legend {
+    display: flex; gap: 20px; flex-wrap: wrap;
+    margin-bottom: 30px; font-size: 0.65rem; color: var(--dim);
+  }
+  .legend-item { display: flex; align-items: center; gap: 6px; }
+  .legend-dot { width: 8px; height: 8px; border-radius: 50%; }
+
+  footer {
+    text-align: center; margin-top: 60px; padding-top: 24px;
+    border-top: 1px solid var(--border);
+    font-size: 0.62rem; color: var(--dim); letter-spacing: 2px;
+  }
+</style>
+</head>
+<body>
+
+<div class="scan-line"></div>
+<div class="container">
+
+  <header>
+    <div class="header-badge">⚡ TEAM LIGHTNING · ROADMAP v1.0</div>
+    <h1>ROADMAP</h1>
+    <p class="subtitle">기획팀 × 개발팀 협의 결과 · 러프 드래프트</p>
+    <div class="nav-btns">
+      <a href="index.html" class="nav-btn ghost">⌂ HOME</a>
+      <a href="org-chart.html" class="nav-btn ghost">👥 TEAM</a>
+      <a href="devlog.html" class="nav-btn ghost">📋 DEV LOG</a>
+      <span class="nav-btn active">🗺️ ROADMAP</span>
+    </div>
+  </header>
+
+  <!-- 기획팀×개발팀 논의 -->
+  <section style="margin-bottom:48px;">
+    <div class="section-title">팀 논의 // TEAM DISCUSSION</div>
+    <div class="discussion-banner">
+      <div class="speakers">
+        <span class="speaker-tag jobs">💡 Steve Jobs · 기획팀장</span>
+        <span class="speaker-tag elon">⚡ Elon Musk · 개발팀장</span>
+      </div>
+
+      <div class="speech jobs">
+        <div class="who">JOBS ▸</div>
+        PM이 아이디어만 있는 상태에서 시작하는 거니까 로드맵이 너무 거창하면 안 돼. 먼저 웹에서 게임이 "재밌다"는 확신이 생길 때까지 빠르게 반복하는 게 핵심이야. 기능을 넣는 게 아니라 재미를 검증하는 거야.
+      </div>
+
+      <div class="speech elon">
+        <div class="who">ELON ▸</div>
+        동의해. 기술적으로도 웹은 빌드/배포 없이 즉시 확인 가능하니까 이터레이션이 빠르고. 유니티 넘어갈 때 "웹에서 검증된 것만" 옮기는 게 원칙이어야 해. 검증 안 된 기능을 유니티에서 처음 만들면 낭비야.
+      </div>
+
+      <div class="speech jobs">
+        <div class="who">JOBS ▸</div>
+        각 단계에서 PM이 방향만 잡아주면 우리가 만드는 구조. 지시 → 구현 → 확인 → 다음 지시. 이 사이클을 짧게 유지하는 게 중요해. PM이 모든 걸 알 필요 없어, 판단만 해주면 돼.
+      </div>
+
+      <div class="speech elon">
+        <div class="who">ELON ▸</div>
+        각 Phase에 명확한 "완료 조건"이 있어야 다음으로 넘어갈 타이밍을 알 수 있어. Phase 1 완료 조건은 "플레이해보고 재밌다고 느껴질 것". 그게 안 되면 유니티 가봤자 비주얼만 예쁜 재미없는 게임이 돼.
+      </div>
+    </div>
+  </section>
+
+  <!-- 범례 -->
+  <div class="legend">
+    <div class="legend-item"><div class="legend-dot" style="background:var(--green)"></div> 완료</div>
+    <div class="legend-item"><div class="legend-dot" style="background:var(--yellow);animation:pulse 1.5s infinite"></div> 진행 중</div>
+    <div class="legend-item"><div class="legend-dot" style="background:var(--dim)"></div> 예정</div>
+    <div class="legend-item" style="margin-left:12px;"><div class="legend-dot" style="background:var(--cyan)"></div> PM 지시</div>
+    <div class="legend-item"><div class="legend-dot" style="background:var(--magenta)"></div> 팀 구현</div>
+    <div class="legend-item"><div class="legend-dot" style="background:var(--yellow)"></div> 공동</div>
+  </div>
+
+  <!-- 로드맵 본문 -->
+  <div class="roadmap-wrap">
+
+    <!-- ═══ PHASE 1 ═══ -->
+    <div class="phase-block">
+      <div class="phase-node p1">01</div>
+      <div class="phase-header p1">
+        <div>
+          <div class="phase-name p1">PHASE 1 — 웹 프로토타입</div>
+          <div style="font-size:0.68rem;color:var(--dim);margin-top:4px;">완료 조건: 플레이해보고 "재밌다" 확신이 생길 것</div>
+        </div>
+        <div class="phase-status active"><div class="phase-dot active"></div>ACTIVE</div>
+      </div>
+
+      <div class="steps-grid">
+
+        <div class="step-card done">
+          <div class="step-num">1</div>
+          <div class="step-tag done">✓ DONE</div>
+          <div class="step-title">기반 구조 구축</div>
+          <ul class="step-desc">
+            <li>검 전투 + 몬스터 이동</li>
+            <li>미스터리 상자 UI</li>
+            <li>6부위 장비 슬롯</li>
+          </ul>
+          <div class="step-who"><div class="who-dot both"></div>PM 아이디어 → 팀 구현</div>
+        </div>
+
+        <div class="step-card done">
+          <div class="step-num">2</div>
+          <div class="step-tag done">✓ DONE</div>
+          <div class="step-title">물리/이동 버그 수정</div>
+          <ul class="step-desc">
+            <li>Freeze 버그 근본 해결</li>
+            <li>충돌 관통 수정</li>
+            <li>랜덤 스폰 시스템</li>
+          </ul>
+          <div class="step-who"><div class="who-dot team"></div>개발팀 자율 진단 · 수정</div>
+        </div>
+
+        <div class="step-card active">
+          <div class="step-num">3</div>
+          <div class="step-tag pm">PM 지시 필요</div>
+          <div class="step-title">전투 느낌 확정</div>
+          <ul class="step-desc">
+            <li>공격 타이밍·속도감 조정</li>
+            <li>아이템 스탯 역산(undo) 구현</li>
+            <li>"재밌다" 느껴질 때까지 반복</li>
+          </ul>
+          <div class="step-who"><div class="who-dot pm"></div>PM 플레이 후 피드백</div>
+        </div>
+
+        <div class="step-card todo">
+          <div class="step-num">4</div>
+          <div class="step-tag team">팀 구현</div>
+          <div class="step-title">보스 패턴 고도화</div>
+          <ul class="step-desc">
+            <li>2페이즈 전환 패턴</li>
+            <li>범위 공격 추가</li>
+            <li>보스별 고유 행동 설계</li>
+          </ul>
+          <div class="step-who"><div class="who-dot team"></div>기획팀 설계 → 개발팀 구현</div>
+        </div>
+
+        <div class="step-card todo">
+          <div class="step-num">5</div>
+          <div class="step-tag pm">PM 지시 필요</div>
+          <div class="step-title">스테이지 수 확정</div>
+          <ul class="step-desc">
+            <li>몇 스테이지까지 만들 건지</li>
+            <li>스테이지별 난이도 곡선</li>
+            <li>엔딩 조건 정의</li>
+          </ul>
+          <div class="step-who"><div class="who-dot pm"></div>PM 방향 결정 필수</div>
+        </div>
+
+        <div class="step-card todo">
+          <div class="step-num">6</div>
+          <div class="step-tag both">공동</div>
+          <div class="step-title">Phase 1 완료 검증</div>
+          <ul class="step-desc">
+            <li>PM 직접 플레이 테스트</li>
+            <li>"재밌다" 판단 후 Phase 2 진입</li>
+            <li>유니티로 옮길 기능 목록 확정</li>
+          </ul>
+          <div class="step-who"><div class="who-dot both"></div>PM 최종 판단</div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ═══ PHASE 2 ═══ -->
+    <div class="phase-block">
+      <div class="phase-node p2">02</div>
+      <div class="phase-header p2">
+        <div>
+          <div class="phase-name p2">PHASE 2 — 유니티 이전</div>
+          <div style="font-size:0.68rem;color:var(--dim);margin-top:4px;">완료 조건: 유니티에서 웹과 동일한 게임 느낌 재현</div>
+        </div>
+        <div class="phase-status waiting"><div class="phase-dot waiting"></div>WAITING</div>
+      </div>
+
+      <div class="steps-grid">
+
+        <div class="step-card todo">
+          <div class="step-num">1</div>
+          <div class="step-tag team">팀 구현</div>
+          <div class="step-title">유니티 프로젝트 세팅</div>
+          <ul class="step-desc">
+            <li>2D 프로젝트 구조 설계</li>
+            <li>씬 구성, 폴더 구조</li>
+            <li>GitHub 연동 (Unity 전용)</li>
+          </ul>
+          <div class="step-who"><div class="who-dot team"></div>개발팀 세팅</div>
+        </div>
+
+        <div class="step-card todo">
+          <div class="step-num">2</div>
+          <div class="step-tag pm">PM 지시 필요</div>
+          <div class="step-title">비주얼 방향 결정</div>
+          <ul class="step-desc">
+            <li>캐릭터 스타일 (픽셀 / 2D 일러)</li>
+            <li>색감·분위기 레퍼런스</li>
+            <li>UI 스타일 가이드</li>
+          </ul>
+          <div class="step-who"><div class="who-dot pm"></div>PM 방향 결정 필수</div>
+        </div>
+
+        <div class="step-card todo">
+          <div class="step-num">3</div>
+          <div class="step-tag team">팀 구현</div>
+          <div class="step-title">핵심 시스템 포팅</div>
+          <ul class="step-desc">
+            <li>전투 시스템 (Unity Physics)</li>
+            <li>장비 슬롯 데이터 구조</li>
+            <li>상태머신 재구현</li>
+          </ul>
+          <div class="step-who"><div class="who-dot team"></div>개발팀 구현</div>
+        </div>
+
+        <div class="step-card todo">
+          <div class="step-num">4</div>
+          <div class="step-tag team">팀 구현</div>
+          <div class="step-title">아트 에셋 제작</div>
+          <ul class="step-desc">
+            <li>캐릭터·몬스터 스프라이트</li>
+            <li>배경·타일셋</li>
+            <li>UI·아이콘·이펙트</li>
+          </ul>
+          <div class="step-who"><div class="who-dot team"></div>아트팀 제작</div>
+        </div>
+
+        <div class="step-card todo">
+          <div class="step-num">5</div>
+          <div class="step-tag team">팀 구현</div>
+          <div class="step-title">사운드 시스템</div>
+          <ul class="step-desc">
+            <li>효과음 (히트·스킬·UI)</li>
+            <li>배경음악</li>
+            <li>오디오 믹싱</li>
+          </ul>
+          <div class="step-who"><div class="who-dot team"></div>팀 제작</div>
+        </div>
+
+        <div class="step-card todo">
+          <div class="step-num">6</div>
+          <div class="step-tag both">공동</div>
+          <div class="step-title">Phase 2 완료 검증</div>
+          <ul class="step-desc">
+            <li>PM 유니티 버전 플레이 테스트</li>
+            <li>웹 버전과 느낌 비교</li>
+            <li>런칭 목표 플랫폼 확정</li>
+          </ul>
+          <div class="step-who"><div class="who-dot pm"></div>PM 최종 판단</div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ═══ PHASE 3 ═══ -->
+    <div class="phase-block">
+      <div class="phase-node p3">03</div>
+      <div class="phase-header p3">
+        <div>
+          <div class="phase-name p3">PHASE 3 — 런칭</div>
+          <div style="font-size:0.68rem;color:var(--dim);margin-top:4px;">완료 조건: 실제 유저가 다운로드·플레이 가능한 상태</div>
+        </div>
+        <div class="phase-status waiting"><div class="phase-dot waiting"></div>WAITING</div>
+      </div>
+
+      <div class="steps-grid">
+
+        <div class="step-card todo">
+          <div class="step-num">1</div>
+          <div class="step-tag pm">PM 지시 필요</div>
+          <div class="step-title">런칭 플랫폼 결정</div>
+          <ul class="step-desc">
+            <li>모바일 (iOS / Android)</li>
+            <li>PC (Steam / itch.io)</li>
+            <li>무료 / 유료 / 광고 모델</li>
+          </ul>
+          <div class="step-who"><div class="who-dot pm"></div>PM 방향 결정 필수</div>
+        </div>
+
+        <div class="step-card todo">
+          <div class="step-num">2</div>
+          <div class="step-tag team">팀 구현</div>
+          <div class="step-title">최적화 · QA</div>
+          <ul class="step-desc">
+            <li>프레임 최적화</li>
+            <li>버그 전수 테스트</li>
+            <li>기기별 호환성 테스트</li>
+          </ul>
+          <div class="step-who"><div class="who-dot team"></div>QA팀 주도</div>
+        </div>
+
+        <div class="step-card todo">
+          <div class="step-num">3</div>
+          <div class="step-tag team">팀 구현</div>
+          <div class="step-title">스토어 등록 준비</div>
+          <ul class="step-desc">
+            <li>스토어 페이지 제작</li>
+            <li>스크린샷·트레일러</li>
+            <li>심사 제출</li>
+          </ul>
+          <div class="step-who"><div class="who-dot team"></div>팀 제작</div>
+        </div>
+
+        <div class="step-card todo">
+          <div class="step-num">4</div>
+          <div class="step-tag pm">PM 지시 필요</div>
+          <div class="step-title">런칭 전략</div>
+          <ul class="step-desc">
+            <li>소프트 런칭 여부 결정</li>
+            <li>SNS·커뮤니티 마케팅</li>
+            <li>업데이트 로드맵 공개 여부</li>
+          </ul>
+          <div class="step-who"><div class="who-dot pm"></div>PM 방향 결정</div>
+        </div>
+
+        <div class="step-card todo">
+          <div class="step-num">5</div>
+          <div class="step-tag both">공동</div>
+          <div class="step-title">🚀 런칭</div>
+          <ul class="step-desc">
+            <li>정식 출시</li>
+            <li>유저 피드백 수집</li>
+            <li>패치·업데이트 사이클 시작</li>
+          </ul>
+          <div class="step-who"><div class="who-dot both"></div>전 팀원</div>
+        </div>
+
+      </div>
+    </div>
+
+  </div><!-- /roadmap-wrap -->
+
+  <footer>
+    ⚡ TEAM LIGHTNING · RANDOM NIGHT ROADMAP · 기획팀 × 개발팀 협의 · 2026
+  </footer>
+
+</div>
+</body>
+</html>
